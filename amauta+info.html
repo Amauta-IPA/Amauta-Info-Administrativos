@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Amauta + Info</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script>
+    window.tailwind = window.tailwind || {};
+    window.tailwind.config = {
+      darkMode: ['class'],
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: '#00055A', foreground: '#FFFFFF' },
+            secondary: { DEFAULT: '#3B82F6', foreground: '#FFFFFF' },
+            card: { DEFAULT: '#E0F2FE', foreground: '#000000', hover: '#38BDF8' },
+            border: '#E5E7EB',
+          },
+          boxShadow: {
+            card: '0 4px 14px rgba(0,0,0,0.12)',
+            modal: '0 12px 32px rgba(0,0,0,0.35)',
+          },
+          borderRadius: { xl: '14px' }
+        },
+      },
+    };
+  </script>
+
+  <style>
+    /* ===== Modal reducido y elegante ===== */
+    .modal-root {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0,0,0,0.7);
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+    .modal-root.is-open { display: flex; }
+
+    .modal-card {
+      background: #fff;
+      border-radius: 14px;
+      width: 94%;
+      max-width: 980px;
+      height: 68vh;
+      display: flex; flex-direction: column; position: relative;
+      box-shadow: var(--tw-shadow, 0 0 #0000), 0 12px 32px rgba(0,0,0,0.35);
+    }
+    @media (min-width: 640px){ .modal-card { width: 82%; height: 66vh; } }
+    @media (min-width: 1024px){ .modal-card { width: 56%; height: 64vh; } }
+
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; border-bottom: 1px solid #E5E7EB; gap: 8px;
+    }
+    .modal-title {
+      font-weight: 600; font-size: 0.98rem; color: #111827;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .modal-actions a {
+      font-size: 0.85rem; padding: 6px 10px; border-radius: 8px;
+      border: 1px solid #E5E7EB; transition: all .2s ease;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .modal-actions a:hover { background: #F3F4F6; }
+    .modal-body { flex: 1; display: flex; padding: 10px; }
+    .modal-body iframe {
+      width: 100%; height: 100%; border: none; border-radius: 10px; background: #f9fafb;
+    }
+
+    /* Botón de cierre cuadrado, flotante y externo */
+    .modal-close {
+      position: absolute; top: -18px; right: -18px;
+      width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 18px; border-radius: 6px; cursor: pointer;
+      background: #fff; color: #111827; border: 2px solid #000; box-shadow: 2px 2px 6px rgba(0,0,0,.3);
+    }
+    .modal-close:hover { background: #000; color: #fff; }
+
+    /* ===== Card estilo pro ===== */
+    .card {
+      background: #f7f7f7;
+      padding: 18px;
+      border-radius: 14px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+      cursor: pointer;
+      text-align: center;
+      transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+    }
+    .card:hover { transform: translateY(-2px); background: #f0f0f0; }
+    .card img { width: 118px; height: auto; margin-left: auto; margin-right: auto; }
+
+    /* ===== Carrusel refinado ===== */
+    .carousel-container {
+      position: relative;
+      max-width: 1100px;
+      margin: 36px auto 8px auto;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 8px;
+    }
+    .carousel-track-container { overflow: hidden; width: 100%; }
+    .carousel-track { display: flex; transition: transform 0.5s ease-in-out; }
+    .carousel-item { min-width: 25%; display: flex; justify-content: center; align-items: center; padding: 14px; }
+    .carousel-item img { width: 120px; height: auto; object-fit: contain; border-radius: 12px; transition: transform 0.3s ease; }
+    .carousel-item img:hover { transform: scale(1.06); }
+
+    .carousel-btn {
+      background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 26px;
+      padding: 8px 12px; cursor: pointer; border-radius: 9999px; transition: background 0.3s;
+      z-index: 2;
+    }
+    .carousel-btn:hover { background: rgba(0,0,0,0.8); }
+    .carousel-btn.prev { position: absolute; left: -6px; }
+    .carousel-btn.next { position: absolute; right: -6px; }
+    @media (max-width: 640px){
+      .carousel-item { min-width: 50%; }
+      .carousel-btn.prev { left: 2px; }
+      .carousel-btn.next { right: 2px; }
+    }
+
+    /* ===== Footer líneas animadas ===== */
+    .v-line {
+      position: absolute; top: -150px; width: 2px; height: 150px;
+      background: rgba(0,212,255,0.5); border-radius: 1px; animation: dropLine 6s linear infinite;
+    }
+    @keyframes dropLine {
+      0% { top: -150px; opacity: 0; }
+      50% { opacity: .6; }
+      100% { top: 100%; opacity: 0; }
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 flex flex-col min-h-screen">
+
+  <!-- Header compacto y pro -->
+  <header class="w-full bg-primary text-primary-foreground shadow">
+    <div class="max-w-7xl mx-auto px-3 sm:px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img src="logo_blanco_sin_ipa.png" alt="Logo IPA Amauta" class="w-12 h-12 sm:w-14 sm:h-14"/>
+        <h1 class="text-xl sm:text-2xl font-bold tracking-tight">Amauta + Info</h1>
+      </div>
+      <div class="text-sm sm:text-base">¡Hola, Administrativo Amautino!</div>
+    </div>
+  </header>
+
+<section class="relative w-full">
+
+  <img src="portalAdmin.jpg"
+       alt="Portal docente Amauta"
+       class="w-full h-[240px] sm:h-[330px] lg:h-[457px] object-top shadow-lg"/>
+
+  <!-- Capa que OSCURECE la imagen -->
+  <div class="absolute inset-0 bg-black/40"></div>
+
+  <!-- Overlay con texto -->
+  <div class="absolute inset-0 flex items-center justify-center">
+    <h2 class="text-white text-2xl sm:text-4xl font-bold drop-shadow-lg">
+      Portal del administrativo Amauta
+    </h2>
+  </div>
+
+</section>
+
+
+
+
+
+  <!-- Contenido -->
+  <main class="w-full">
+    <section class="max-w-7xl mx-auto px-3 sm:px-4 py-6">
+      <!-- Grid cards - márgenes laterales compactos -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+
+     <!-- Manual de Uso Q10 -->
+        <div class="card"
+             role="button" tabindex="0"
+             data-title="Manual docente Q10"
+             data-preview="https://drive.google.com/file/d/1ypZmp3w4pTQ8sE_14SFhAXJ30jXZJD0x/preview"
+             data-fileid="1M6whnPKWByzBVuDd1dHIpS8IrQhybAMl">
+          <img src="Manual_Uso_Q10.png" alt="Manual de Uso Q10"/>
+          <h3 class="text-center mt-2 font-medium">Manual de ventas Q10</h3>
+        </div>
+
+        <!-- Canal de Youtube (enlace externo) -->
+        <a class="card"
+           href="https://www.youtube.com/@ipaAmauta"
+           target="_blank" rel="noopener noreferrer"
+           title="Abrir tutoriales">
+          <img src="Youtube.png" alt="Amauta IA"/>
+          <h3 class="text-center mt-2 font-medium">Canal de Youtube</h3>
+        </a>
+
+         <!-- REPOSITORIO (enlace externo) -->
+        <a class="card"
+           href="https://amauta-ipa.github.io/RespositorioAmauta/ini.html"
+           target="_blank" rel="noopener noreferrer"
+           title="Repositorio Institucional">
+          <img src="Repositorio Institucional.png" alt="Repositorio Institucional"/>
+          <h3 class="text-center mt-2 font-medium">Repositorio Institucional</h3>
+        </a>
+
+  <!-- REPOSITORIO (enlace externo) -->
+        <a class="card"
+           href="https://amauta-ipa.github.io/Amauta-Info/amauta+info.html"
+           target="_blank" rel="noopener noreferrer"
+           title="Repositorio Institucional">
+          <img src="Portal del Docente.png" alt="Repositorio Institucional"/>
+          <h3 class="text-center mt-2 font-medium">Portal del Estudiante</h3>
+        </a>
+
+ <!-- Desarrollo Docente -->
+        <a class="card"
+           href="https://amauta-ipa.github.io/Amauta-Info---Docentes/amauta+info.html"
+           target="_blank" rel="noopener noreferrer"
+           title="Portal del Docente IPA">
+          <img src="desarrolloProfesor.png" alt="Portal del Docente IPA"/>
+          <h3 class="text-center mt-2 font-medium">Portal del Docente IPA</h3>
+        </a>       
+
+        <!-- biblioteca (enlace externo) -->
+        <a class="card"
+           href="https://www.digitaliapublishing.com/"
+           target="_blank" rel="noopener noreferrer"
+           title="Abrir tutoriales">
+          <img src="Biblioteca.png" alt="Amauta IA"/>
+          <h3 class="text-center mt-2 font-medium">Biblioteca </h3>
+        </a>
+
+           <!-- REPOSITORIO (enlace externo) -->
+        <a class="card"
+           href="https://amauta.q10.com"
+           target="_blank" rel="noopener noreferrer"
+           title="Plataforma Q10">
+          <img src="PPTSustentacionTesis.png" alt="Plataforma Q10"/>
+          <h3 class="text-center mt-2 font-medium">Plataforma Q10</h3>
+        </a>
+
+        <!-- Amauta IA (enlace externo) -->
+        <a class="card"
+           href="https://monica.im/share/bot?botId=qcAnZLpM"
+           target="_blank" rel="noopener noreferrer"
+           title="Abrir Amauta IA">
+          <img src="robot_ipa.png" alt="Amauta IA"/>
+          <h3 class="text-center mt-2 font-medium">Amauta IA</h3>
+        </a>
+
+        <!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://trello.com/b/2L4kYBtq/trello-2025"
+           target="_blank" rel="noopener noreferrer"
+           title="Sistema de Evaluación Docente">
+          <img src="Trello (1).png" alt="Sistema de Evaluación Docente"/>
+          <h3 class="text-center mt-2 font-medium">Gestión del Trabajo - trello</h3>
+        </a>
+
+ <!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://drive.google.com/drive/folders/1yYWtjgFFsQkvwXCIxc4pzJO1trgNmfy1?usp=sharing"
+           target="_blank" rel="noopener noreferrer"
+           title="Sistema de Evaluación Docente">
+          <img src="Personal - Vacaciones - Permisos.png" alt="Sistema de Evaluación Docente"/>
+          <h3 class="text-center mt-2 font-medium">Gestión de Personas Vacaciones, Permisos y Tardanzas</h3>
+        </a>
+
+ <!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://drive.google.com/drive/folders/1yYWtjgFFsQkvwXCIxc4pzJO1trgNmfy1?usp=sharing"
+           target="_blank" rel="noopener noreferrer"
+           title="Sistema de Evaluación Docente">
+          <img src="Taller de fortalecimiento.png" alt="Sistema de Evaluación Docente"/>
+          <h3 class="text-center mt-2 font-medium">Taller de Fortalecimiento</h3>
+        </a>
+
+<!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://drive.google.com/drive/folders/1yYWtjgFFsQkvwXCIxc4pzJO1trgNmfy1?usp=sharing"
+           target="_blank" rel="noopener noreferrer"
+           title="Sistema de Evaluación Docente">
+          <img src="Evento de graduación.png" alt="Sistema de Evaluación Docente"/>
+          <h3 class="text-center mt-2 font-medium">Evento de Graduación</h3>
+        </a>
+
+<!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://drive.google.com/drive/folders/1yYWtjgFFsQkvwXCIxc4pzJO1trgNmfy1?usp=sharing"
+           target="_blank" rel="noopener noreferrer"
+           title="Sistema de Evaluación Docente">
+          <img src="Aniversario.png" alt="Sistema de Evaluación Docente"/>
+          <h3 class="text-center mt-2 font-medium">Aniversario</h3>
+        </a>
+
+<!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://drive.google.com/drive/folders/1yYWtjgFFsQkvwXCIxc4pzJO1trgNmfy1?usp=sharing"
+           target="_blank" rel="noopener noreferrer"
+           title="Sistema de Evaluación Docente">
+          <img src="Taller de tesis.png" alt="Sistema de Evaluación Docente"/>
+          <h3 class="text-center mt-2 font-medium">Taller de Tesis</h3>
+        </a>
+
+<!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://drive.google.com/drive/folders/19641eHkvNKmHyCRM1PobX5PfJnsmwsAY?usp=sharing"
+           target="_blank" rel="noopener noreferrer"
+           title="Back-Up Aulas Virtuales">
+          <img src="BackUp Aulas virtuales.png" alt="Back-Up Aulas Virtuales"/>
+          <h3 class="text-center mt-2 font-medium">Back-Up Aulas Virtuales</h3>
+        </a>
+
+<!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://drive.google.com/drive/folders/13p7thh9tD_9vreZ9iUhobH5FzLmE9Wmm?usp=sharing"
+           target="_blank" rel="noopener noreferrer"
+           title="Back-Up Aulas Virtuales">
+          <img src="Carpeta pedagógica docente (CV, subsanación).png" alt="Back-Up Aulas Virtuales"/>
+          <h3 class="text-center mt-2 font-medium">Carpeta Pedagogica Docente (cv,subsanación)</h3>
+        </a>
+
+         <!-- Reglamento para el Docente -->
+        <a class="card"
+           href="https://gptzero.me/es"
+           target="_blank" rel="noopener noreferrer"
+           title="Detectar Plagio con IA">
+          <img src="ReglamentoDocente.png" alt="Reglamento para el Docente"/>
+          <h3 class="text-center mt-2 font-medium">Reglamento Interno de Trabajo</h3>
+        </a> 
+
+ <!-- Herramientas digitales para el docente(enlace externo) -->
+        <a class="card"
+           href="https://github.com/Amauta-IPA?tab=repositories"
+           target="_blank" rel="noopener noreferrer"
+           title="Detectar Plagio con IA">
+          <img src="GITHUB (2).png" alt="Detectar Plagio con IA"/>
+          <h3 class="text-center mt-2 font-medium">Github Repository</h3>
+        </a>
+
+<!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://drive.google.com/drive/folders/1yYWtjgFFsQkvwXCIxc4pzJO1trgNmfy1?usp=sharing"
+           target="_blank" rel="noopener noreferrer"
+           title="Área de Ventas">
+          <img src="Reglamento_Institucional.png" alt="Área de Ventas"/>
+          <h3 class="text-center mt-2 font-medium">Área de Ventas</h3>
+        </a>
+
+<!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://drive.google.com/drive/folders/1yYWtjgFFsQkvwXCIxc4pzJO1trgNmfy1?usp=sharing"
+           target="_blank" rel="noopener noreferrer"
+           title="Área de Ventas">
+          <img src="FichaPractica_I - VI.png" alt="Área de Ventas"/>
+          <h3 class="text-center mt-2 font-medium">Horas de Docentes</h3>
+        </a>
+
+<!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://drive.google.com/drive/folders/1lFJsYO9z2wLcYCMbQGBiMGCTAOToERZO?usp=sharing"
+           target="_blank" rel="noopener noreferrer"
+           title="Área de Ventas">
+          <img src="Manual_Pagos.png" alt="Área de Ventas"/>
+          <h3 class="text-center mt-2 font-medium">Pagos - Boletas de Sociales</h3>
+        </a>
+
+
+<!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://drive.google.com/drive/folders/19SNS1sNX3ip5CdOO8afY1SZ3tKX3rhoq?usp=sharing"
+           target="_blank" rel="noopener noreferrer"
+           title="Área de Ventas">
+          <img src="Tarifario.png" alt="Área de Ventas"/>
+          <h3 class="text-center mt-2 font-medium">Boletas Mandiles, Polos</h3>
+        </a>
+
+        <!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://amauta-ipa.github.io/Sistema_Got_Eyes/index.html"
+           target="_blank" rel="noopener noreferrer"
+           title="Área de Ventas">
+          <img src="Taller de fortalecimiento.png" alt="Área de Ventas"/>
+          <h3 class="text-center mt-2 font-medium">Sistema Integrado de Gestión y Monitoreo Institucional - IPA (SGM) </h3>
+        </a>
+
+        <!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://amauta-srg.vercel.app/"
+           target="_blank" rel="noopener noreferrer"
+           title="Área de Ventas">
+          <img src="PPTSustentacionTesis.png" alt="Área de Ventas"/>
+          <h3 class="text-center mt-2 font-medium">Sistema de Gestión y seguimiento - SIGESE</h3>
+        </a>
+
+        <!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://drive.google.com/drive/folders/1Cuhglc5wiXwdBysccrAVZIDlG9cQ2Cuq?usp=sharing"
+           target="_blank" rel="noopener noreferrer"
+           title="Área de Ventas">
+          <img src="lineamientosTesisPresentacion.png" alt="Área de Ventas"/>
+          <h3 class="text-center mt-2 font-medium">Seguimiento de Egresados</h3>
+        </a>
+
+        <!-- Herramientas digitales para el docente(enlace externo) -->
+        <a class="card"
+           href="https://drive.google.com/drive/folders/1Sc7nZLvro2Eikg8jGY3Q_daXPGmH0izc?usp=sharing"
+           target="_blank" rel="noopener noreferrer"
+           title="Herramientas Digitales para el aula">
+          <img src="OrientacionSustentacionTesis.png" alt="Herramientas Digitales para el aula"/>
+          <h3 class="text-center mt-2 font-medium">Seguimiento de Docentes</h3>
+        </a> 
+
+        <!-- Carpeta Pedagogica (enlace externo) -->
+        <a class="card"
+           href="https://drive.google.com/drive/folders/1tQoPJz0aLI7J3bQ8OhLTaf-TH_eC53_8?usp=sharing"
+           target="_blank" rel="noopener noreferrer"
+           title="Carpeta Pedagogica">
+          <img src="Reglamento_Institucional.png" alt="Carpeta Pedagogica"/>
+          <h3 class="text-center mt-2 font-medium">Seguimiento de Estudiantes</h3>
+        </a>
+
+ <!-- Drive de Registros de Calificaciones Q10 (enlace externo) -->
+        <a class="card"
+           href="https://drive.google.com/drive/folders/1zq0k-Isk0EDSqnUK5q1vVIMf1WI9RY0i?usp=sharing"
+           target="_blank" rel="noopener noreferrer"
+           title="Drive de Registros de Calificaciones Q10">
+          <img src="Canales_Atencion.png" alt="Drive de Registros de Calificaciones Q10"/>
+          <h3 class="text-center mt-2 font-medium">Data Actual Estudiantes</h3>
+        </a>
+
+ <!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://drive.google.com/drive/folders/1DX--D6FsbHH8Yv6TSLqyikTn5bNfCvev?usp=sharing"
+           target="_blank" rel="noopener noreferrer"
+           title="Área de Ventas">
+          <img src="Manual_Uso_Q10.png" alt="Área de Ventas"/>
+          <h3 class="text-center mt-2 font-medium">Drive de Procesos</h3>
+        </a>
+
+ <!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://drive.google.com/drive/folders/1OaUHLUNJBvyLte4e4Cg7Qf7oKxBymM7D?usp=sharing"
+           target="_blank" rel="noopener noreferrer"
+           title="Área de Ventas">
+          <img src="Repositorio Institucional.png" alt="Área de Ventas"/>
+          <h3 class="text-center mt-2 font-medium">Gestión Institucional - Supervisiones DRELM / DIFOID</h3>
+        </a>
+
+
+         <!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://drive.google.com/drive/folders/1lisYE3oZOV9_gxjGZOqgsDra7uhm8eQG?usp=sharing"
+           target="_blank" rel="noopener noreferrer"
+           title="Área de Ventas">
+          <img src="Reglamento_Prac_Invest.png" alt="Área de Ventas"/>
+          <h3 class="text-center mt-2 font-medium">Documentos para el Admisión</h3>
+        </a>
+
+  <!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://iespamauta.novosofterp.pro/ecommerce"
+           target="_blank" rel="noopener noreferrer"
+           title="Área de Ventas">
+          <img src="Portal del Docente.png" alt="Área de Ventas"/>
+          <h3 class="text-center mt-2 font-medium">Tienda Virtual</h3>
+        </a>
+
+
+          <!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://iespamauta.novosofterp.pro/login"
+           target="_blank" rel="noopener noreferrer"
+           title="Área de Ventas">
+          <img src="Taller de fortalecimiento.png" alt="Área de Ventas"/>
+          <h3 class="text-center mt-2 font-medium">Tecnovo</h3>
+        </a>
+
+   <!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://drive.google.com/drive/folders/1M7FYlgIqVjd_MpQAE1TD2VwjVpCZ8KBJ"
+           target="_blank" rel="noopener noreferrer"
+           title="Expedientes IPA">
+          <img src="OrientacionSustentacionTesis.png" alt="Expedientes IPA"/>
+          <h3 class="text-center mt-2 font-medium">Expedientes IPA</h3>
+        </a>
+
+ <!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://drive.google.com/drive/folders/1nSxjETKOV0W2pezNaiGx-Tac6NyzWcdT?usp=sharing"
+           target="_blank" rel="noopener noreferrer"
+           title="Área de Ventas">
+          <img src="Manual_Uso_Q10.png" alt="Área de Ventas"/>
+          <h3 class="text-center mt-2 font-medium">Actas y Nominas de Matricula IPA</h3>
+        </a>
+
+         <!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://drive.google.com/drive/folders/1MAyt5EnHon_iKiWtfkckxcp-I7SHAQq5?usp=sharing"
+           target="_blank" rel="noopener noreferrer"
+           title="Área de Ventas">
+          <img src="lineamientosTesisPresentacion.png" alt="Área de Ventas"/>
+          <h3 class="text-center mt-2 font-medium">Semana Cero IPA</h3>
+        </a>
+
+  <!-- Sistema de Evaluación Docente (enlace externo) -->
+        <a class="card"
+           href="https://drive.google.com/drive/folders/1Tw3pRFWgSdYcSKPqHnHF6_wSsGI34iBq?usp=sharing"
+           target="_blank" rel="noopener noreferrer"
+           title="Área de Ventas">
+          <img src="Carpeta pedagógica docente (CV, subsanación).png" alt="Área de Ventas"/>
+          <h3 class="text-center mt-2 font-medium">Inducción para el Examen de Admisión</h3>
+        </a>
+
+          <!-- Accesos rápidos bajo la card (opcional) 
+          <div class="mt-2 flex items-center justify-center gap-2">
+            <a href="https://drive.google.com/file/d/15qdNJNs7V4DnGNE8RZ0ZaWY9gfclYBnc/view?usp=sharing"
+               target="_blank" rel="noopener noreferrer"
+               class="px-3 py-1 rounded bg-secondary text-secondary-foreground text-xs sm:text-sm hover:opacity-90 transition"
+               title="Abrir en Drive">Abrir en Drive</a>
+            <a href="https://drive.google.com/uc?export=download&id=15qdNJNs7V4DnGNE8RZ0ZaWY9gfclYBnc"
+               class="px-3 py-1 rounded border text-xs sm:text-sm hover:bg-gray-100 transition"
+               title="Descargar PDF">Descargar</a>
+          </div>
+        </div>
+-->
+      </div>
+    </section>
+
+    <!-- Carrusel -->
+    <section class="carousel-container">
+      <button class="carousel-btn prev" aria-label="Anterior">&#10094;</button>
+      <div class="carousel-track-container">
+        <ul class="carousel-track">
+          <li class="carousel-item">
+            <a href="https://www.youtube.com/shorts/Ktn_FEPxYdk" target="_blank" rel="noopener noreferrer" title="Video: Aplicativo Móvil Amauta+">
+              <img src="AplicativoMovil_Amauta+.jpg" alt="Aplicativo Móvil Amauta+">
+            </a>
+          </li>
+          <li class="carousel-item">
+            <a href="https://amauta.q10.com/SolicitudesInstitucionales/NuevaSolicitudEstudiante" target="_blank" rel="noopener noreferrer" title="Solicitudes Q10">
+              <img src="sistema_tramites_q10.jpg" alt="Solicitudes Q10">
+            </a>
+          </li>
+          <li class="carousel-item">
+            <a href="https://iespamauta.novosofterp.pro/ecommerce" target="_blank" rel="noopener noreferrer" title="Tienda Virtual">
+              <img src="tienda_virtual.jpg" alt="Tienda Virtual">
+            </a>
+          </li>
+          <li class="carousel-item">
+            <a href="https://www.digitaliapublishing.com/" target="_blank" rel="noopener noreferrer" title="Biblioteca Digital CONCYTEC">
+              <img src="digitaliaBibloteca.jpg" alt="Biblioteca Digital CONCYTEC">
+            </a>
+          </li>
+          <li class="carousel-item">
+            <a href="https://www.youtube.com/@ipaAmauta" target="_blank" rel="noopener noreferrer" title="Canal de YouTube">
+              <img src="canalYoutube.jpg" alt="Canal de YouTube">
+            </a>
+          </li>
+          <li class="carousel-item">
+            <a href="https://amauta-ipa.github.io/RespositorioAmauta/ini.html" target="_blank" rel="noopener noreferrer" title="Repositorio Institucional">
+              <img src="repositorioInstitucional.jpg" alt="Repositorio Institucional">
+            </a>
+          </li>
+          <li class="carousel-item">
+            <a href="https://amauta.q10.com/OfertasLaborales" target="_blank" rel="noopener noreferrer" title="Bolsa Laboral">
+              <img src="BolsaLaboral.jpg" alt="Bolsa Laboral">
+            </a>
+          </li>
+          <li class="carousel-item">
+            <a href="https://amauta.q10.com" target="_blank" rel="noopener noreferrer" title="Plataforma Q10">
+              <img src="PlataformaQ10.jpg" alt="Plataforma Q10">
+            </a>
+          </li>
+          <li class="carousel-item">
+            <a href="https://amauta-ipa.github.io/Amauta-Info/amauta+info.html" target="_blank" rel="noopener noreferrer" title="Portal Amauta+Info">
+              <img src="Amauta+Info.jpg" alt="Portal Amauta+Info">
+            </a>
+          </li>
+        </ul>
+      </div>
+      <button class="carousel-btn next" aria-label="Siguiente">&#10095;</button>
+    </section>
+  </main>
+
+  <!-- Modal PDF -->
+  <div id="pdfModal" class="modal-root" aria-hidden="true" aria-labelledby="pdfTitle" role="dialog">
+    <div class="modal-card">
+      <button class="modal-close" id="modalCloseBtn" aria-label="Cerrar">✖</button>
+
+      <div class="modal-header">
+        <div class="modal-title" id="pdfTitle">Documento</div>
+        <div class="modal-actions">
+          <a id="openInDriveBtn" target="_blank" rel="noopener noreferrer" title="Abrir en Drive">Abrir en Drive</a>
+          <a id="downloadBtn" title="Descargar PDF">Descargar</a>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <iframe id="pdfViewer" title="Visor de documento PDF"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="relative text-white bg-primary mt-8">
+    <div class="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-3 sm:px-4 py-10 max-w-7xl mx-auto">
+      <div>
+        <h4 class="font-semibold">Nosotros</h4>
+        <p class="mt-1 mb-2">Líderes en Innovación Educativa</p>
+        <a class="underline underline-offset-2" href="https://amauta.q10.com/SolicitudesInstitucionales/NuevaSolicitud" target="_blank" rel="noopener noreferrer">
+          Libro de Reclamaciones
+        </a>
+      </div>
+      <div>
+        <h4 class="font-semibold">Servicios</h4>
+        <ul class="list-disc pl-5 mt-2 space-y-1">
+          <li>Biblioteca Institucional</li>
+          <li>Atención y seguimiento al Alumno</li>
+          <li>Plataformas Institucionales</li>
+          <li>Aplicativo Móvil</li>
+          <li>Bolsa Laboral</li>
+          <li>Portal Informativo</li>
+          <li>Créditos y Cobranza</li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-semibold">Programas</h4>
+        <ul class="list-disc pl-5 mt-2 space-y-1">
+          <li>Educación Inicial</li>
+          <li>Educación Primaria</li>
+          <li>Educación Secundaria (Ciencias Sociales)</li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-semibold">Contacto</h4>
+        <p class="mt-2">Av. 9 de diciembre 321, Cercado de Lima</p>
+        <p class="mt-1">Celular: 974 329 311</p>
+      </div>
+    </div>
+
+    <div class="relative z-10 text-center pb-6">
+      <div class="text-sm opacity-90">© 2025 Portal Informativo Institucional IPA - AMAUTA. <span class="opacity-80">Versión 2.1.0</span></div>
+    </div>
+
+    <!-- Líneas verticales animadas -->
+    <div class="v-line" style="left:5%;"></div>
+    <div class="v-line" style="left:15%;"></div>
+    <div class="v-line" style="left:25%;"></div>
+    <div class="v-line" style="left:35%;"></div>
+    <div class="v-line" style="left:50%;"></div>
+    <div class="v-line" style="left:65%;"></div>
+    <div class="v-line" style="left:80%;"></div>
+  </footer>
+
+  <!-- Scripts -->
+  <script>
+    /* ===== Utilidades de Google Drive ===== */
+    const buildDriveViewURL = (fileId) => `https://drive.google.com/file/d/${fileId}/view?usp=sharing`;
+    const buildDriveDownloadURL = (fileId) => `https://drive.google.com/uc?export=download&id=${fileId}`;
+
+    /* ===== Modal ===== */
+    const modalRoot = document.getElementById('pdfModal');
+    const pdfViewer = document.getElementById('pdfViewer');
+    const modalTitle = document.getElementById('pdfTitle');
+    const openInDriveBtn = document.getElementById('openInDriveBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+    const openPDFModal = ({ title, previewURL, fileId }) => {
+      modalTitle.textContent = title || 'Documento';
+      pdfViewer.src = previewURL || '';
+      if (fileId) {
+        openInDriveBtn.href = buildDriveViewURL(fileId);
+        downloadBtn.href = buildDriveDownloadURL(fileId);
+        downloadBtn.setAttribute('target','_blank');
+        downloadBtn.setAttribute('rel','noopener noreferrer');
+      } else {
+        openInDriveBtn.removeAttribute('href');
+        downloadBtn.removeAttribute('href');
+      }
+      modalRoot.classList.add('is-open');
+      modalRoot.setAttribute('aria-hidden', 'false');
+    };
+
+    const closePDFModal = () => {
+      modalRoot.classList.remove('is-open');
+      modalRoot.setAttribute('aria-hidden', 'true');
+      pdfViewer.src = '';
+    };
+
+    modalCloseBtn.addEventListener('click', closePDFModal);
+    modalRoot.addEventListener('click', (e) => { if (e.target === modalRoot) closePDFModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modalRoot.classList.contains('is-open')) closePDFModal(); });
+
+    // Bind a todas las cards con data-preview/fileid
+    document.querySelectorAll('.card[data-preview]').forEach(card => {
+      const title = card.getAttribute('data-title') || 'Documento';
+      const preview = card.getAttribute('data-preview') || '';
+      const fileId = card.getAttribute('data-fileid') || '';
+
+      const handler = () => openPDFModal({ title, previewURL: preview, fileId });
+      card.addEventListener('click', handler);
+      card.addEventListener('keypress', (e) => { if (e.key === 'Enter') handler(); });
+    });
+
+    /* ===== Carrusel ===== */
+    const track = document.querySelector('.carousel-track');
+    const prevBtn = document.querySelector('.carousel-btn.prev');
+    const nextBtn = document.querySelector('.carousel-btn.next');
+    const items = document.querySelectorAll('.carousel-item');
+
+    let index = 0;
+    let itemsPerView = window.innerWidth < 640 ? 2 : 4;
+    const totalItems = items.length;
+
+    const updateCarousel = () => {
+      itemsPerView = window.innerWidth < 640 ? 2 : 4;
+      const slideWidth = items[0].getBoundingClientRect().width;
+      track.style.transform = `translateX(-${index * slideWidth}px)`;
+    };
+
+    nextBtn.addEventListener('click', () => {
+      if (index < totalItems - itemsPerView) { index++; updateCarousel(); }
+    });
+
+    prevBtn.addEventListener('click', () => {
+      if (index > 0) { index--; updateCarousel(); }
+    });
+
+    window.addEventListener('resize', updateCarousel);
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
