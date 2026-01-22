@@ -134,6 +134,133 @@
       50% { opacity: .6; }
       100% { top: 100%; opacity: 0; }
     }
+
+/* ===== TOUR POPUP ===== */
+.tour-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.tour-card {
+  background: #ffffff;
+  border-radius: 18px;
+  width: 94%;
+  max-width: 500px;
+  box-shadow: 0 20px 40px rgba(0,0,0,.35);
+  overflow: hidden;
+  animation: tourFadeIn 0.35s ease;
+  position: relative;
+}
+
+.tour-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.tour-title {
+  margin: 14px 16px 6px;
+  font-size: 1.15rem;
+  font-weight: 600;
+  text-align: center;
+  color: #111827;
+}
+
+.tour-text {
+  margin: 0 16px 14px;
+  font-size: 0.95rem;
+  text-align: center;
+  color: #4b5563;
+}
+
+.tour-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  padding: 0 16px 16px;
+}
+
+.tour-prev {
+  background: #e5e7eb;
+  color: #111827;
+  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.tour-prev:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tour-skip {
+  background: #3b82f6; /* AZUL */
+  color: #ffffff;
+  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.tour-next {
+  background: #00055A;
+  color: #ffffff;
+  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.tour-next:hover,
+.tour-skip:hover {
+  opacity: 0.9;
+}
+
+.tour-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* Responsive extra */
+@media (max-width: 480px) {
+  .tour-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@keyframes tourFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+
+
+
+
+    
   </style>
 </head>
 
@@ -150,6 +277,122 @@
     </div>
   </header>
 
+
+<!-- ========== POPUP RECORRIDO ========== -->
+<div id="tourOverlay" class="tour-overlay">
+  <div class="tour-card">
+
+    <!-- Botón cerrar -->
+    <button class="tour-close" id="tourCloseBtn">X</button>
+
+    <!-- Imagen -->
+    <img
+      id="tourImage"
+      src=""
+      alt="Guía IPA Amauta"
+      class="tour-image"
+    />
+
+    <!-- Texto -->
+    <h3 id="tourTitle" class="tour-title"></h3>
+    <p id="tourText" class="tour-text"></p>
+
+    <!-- Acciones -->
+    <div class="tour-actions">
+      
+
+<button id="tourPrevBtn" class="tour-next">
+        Anterior
+      </button>
+<button id="tourSkipBtn" class="">
+        Omitir
+      </button>
+      <button id="tourNextBtn" class="tour-next">
+        Siguiente 
+      </button>
+    </div>
+
+  </div>
+</div>
+<!-- =================================== -->
+
+
+<script>
+  const tourSteps = [
+    {
+      image: 'EDUCACIÓN INICIAL.png',
+      title: 'IESPP AMAUTA',
+      text: 'Líderes en Innovación Educativa.'
+    },
+    {
+      image: 'EDUCACIÓN PRIMARIA.png',
+      title: 'IESPP AMAUTA',
+      text: 'Líderes en Innovación Educativa.'
+     },
+    {
+      image: 'EDUCACIÓN SECUNDARIA.png',
+     title: 'IESPP AMAUTA',
+      text: 'Líderes en Innovación Educativa.'
+       }
+  ];
+
+  let currentStep = 0;
+
+  const overlay = document.getElementById('tourOverlay');
+  const image = document.getElementById('tourImage');
+  const title = document.getElementById('tourTitle');
+  const text = document.getElementById('tourText');
+  const nextBtn = document.getElementById('tourNextBtn');
+  const prevBtn = document.getElementById('tourPrevBtn');
+  const skipBtn = document.getElementById('tourSkipBtn');
+  const closeBtn = document.getElementById('tourCloseBtn');
+
+  function renderStep() {
+    const step = tourSteps[currentStep];
+    image.src = step.image;
+    title.textContent = step.title;
+    text.textContent = step.text;
+
+    prevBtn.disabled = currentStep === 0;
+    nextBtn.textContent =
+      currentStep === tourSteps.length - 1 ? 'Finalizar' : 'Siguiente';
+  }
+
+  nextBtn.addEventListener('click', () => {
+    if (currentStep < tourSteps.length - 1) {
+      currentStep++;
+      renderStep();
+    } else {
+      overlay.style.display = 'none';
+    }
+  });
+
+  prevBtn.addEventListener('click', () => {
+    if (currentStep > 0) {
+      currentStep--;
+      renderStep();
+    }
+  });
+
+  skipBtn.addEventListener('click', () => {
+    overlay.style.display = 'none';
+  });
+
+  closeBtn.addEventListener('click', () => {
+    overlay.style.display = 'none';
+  });
+
+  window.addEventListener('load', () => {
+    overlay.style.display = 'flex';
+    renderStep();
+  });
+</script>
+<!-- CERRAR LA INFORMACIÓN DE POP UP SCRIPT -->
+
+
+
+
+  
 <section class="relative w-full">
 
   <img src="portalAdmin.jpg"
@@ -612,6 +855,86 @@
       </div>
     </section>
 
+
+<!-- ================== VIDEOS INFORMATIVOS ================== -->
+<section class="max-w-7xl mx-auto px-3 sm:px-4 py-10 space-y-12">
+
+  <!-- FASE 1: Texto izquierda / Video derecha -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+    
+    <!-- Texto -->
+    <div>
+      <h3 class="text-xl font-semibold text-gray-800 mb-2">
+              <b> Primera fase del Examen de Admisión</b>
+      </h3>
+      <p class="text-gray-600 leading-relaxed text-justify" >
+Para la primera fase del Examen de Admisión, el postulante deberá asistir puntualmente y portar obligatoriamente su DNI, el cual será utilizado para su identificación y registro el primer día.
+
+En esta etapa, rendirá su examen escrito. Previamente, se llevará a cabo una reunión de orientación, en la cual se brindarán las indicaciones, requisitos y alcances del proceso, con la finalidad de evitar cualquier inconveniente el día del examen.
+
+Se recomienda prepararse con el Prospecto del Examen de Admisión, ya que una adecuada preparación garantizará el éxito en esta primera fase.
+      </p>
+    </div>
+
+    <!-- IMAGENES CON URL -->
+<div class="w-full aspect-video rounded-xl overflow-hidden shadow-lg flex items-center justify-center">
+  <a
+    href="https://www.youtube.com/shorts/EJ52jd9K-AE"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="flex items-center justify-center w-full h-full"
+  >
+    <img
+      src="1_FASES IPA.jpg"
+      alt="Detectar Plagio con IA"
+      class="w-[450px] h-[380px] object-contain"
+      loading="lazy"
+    />
+  </a>
+</div>
+
+
+<!-- IMAGENES CON URL -->
+<div class="w-full aspect-video rounded-xl overflow-hidden shadow-lg flex items-center justify-center">
+  <a
+    href="https://www.youtube.com/shorts/T--1PZSaYxw"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="flex items-center justify-center w-full h-full"
+  >
+    <img
+      src="2_FASES IPA.png"
+      alt="Detectar Plagio con IA"
+      class="w-[450px] h-[380px] object-contain"
+      loading="lazy"
+    />
+  </a>
+</div>
+
+
+<!-- FASE 1: Texto izquierda / Video derecha -->
+  
+    
+  <!-- Texto -->
+    <div>
+      <h3 class="text-xl font-semibold text-gray-800 mb-2">
+              <b> Segunda fase del Examen de Admisión</b>
+      </h3>
+      <p class="text-gray-600 leading-relaxed text-justify" >
+Para asistir a la segunda fase, el postulante deberá haber aprobado previamente la primera fase. En caso de no haber obtenido la condición de aprobado, no podrá participar en la segunda fase del proceso.
+
+Los resultados de la primera fase serán publicados a través de nuestro Facebook oficial, así como en el grupo oficial de WhatsApp, al cual el postulante es añadido desde el momento en que realiza su proceso de inscripción.
+
+Al finalizar la segunda fase, los resultados de los postulantes que hayan alcanzado una vacante serán difundidos por nuestros canales oficiales de comunicación.     </p>
+    </div>
+
+
+</section>
+<!-- ========================================================= -->
+
+
+
+    
     <!-- Carrusel -->
     <section class="carousel-container">
       <button class="carousel-btn prev" aria-label="Anterior">&#10094;</button>
@@ -817,6 +1140,7 @@
   </script>
 </body>
 </html>
+
 
 
 
