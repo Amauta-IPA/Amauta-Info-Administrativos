@@ -1,1210 +1,388 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Amauta + Info</title>
-
-  <!-- Tailwind -->
-  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
-  <script>
-    window.tailwind = window.tailwind || {};
-    window.tailwind.config = {
-      darkMode: ['class'],
-      theme: {
-        extend: {
-          colors: {
-            primary: { DEFAULT: '#00055A', foreground: '#FFFFFF' },
-            secondary: { DEFAULT: '#3B82F6', foreground: '#FFFFFF' },
-            card: { DEFAULT: '#E0F2FE', foreground: '#000000', hover: '#38BDF8' },
-            border: '#E5E7EB',
-          },
-          boxShadow: {
-            card: '0 4px 14px rgba(0,0,0,0.12)',
-            modal: '0 12px 32px rgba(0,0,0,0.35)',
-          },
-          borderRadius: { xl: '14px' }
-        },
-      },
-    };
-  </script>
-
-  <style>
-    /* ===== Modal reducido y elegante ===== */
-    .modal-root {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 1000;
-      background: rgba(0,0,0,0.7);
-      justify-content: center;
-      align-items: center;
-      padding: 16px;
-    }
-    .modal-root.is-open { display: flex; }
-
-    .modal-card {
-      background: #fff;
-      border-radius: 14px;
-      width: 94%;
-      max-width: 980px;
-      height: 68vh;
-      display: flex; flex-direction: column; position: relative;
-      box-shadow: var(--tw-shadow, 0 0 #0000), 0 12px 32px rgba(0,0,0,0.35);
-    }
-    @media (min-width: 640px){ .modal-card { width: 82%; height: 66vh; } }
-    @media (min-width: 1024px){ .modal-card { width: 56%; height: 64vh; } }
-
-    .modal-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 14px; border-bottom: 1px solid #E5E7EB; gap: 8px;
-    }
-    .modal-title {
-      font-weight: 600; font-size: 0.98rem; color: #111827;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .modal-actions a {
-      font-size: 0.85rem; padding: 6px 10px; border-radius: 8px;
-      border: 1px solid #E5E7EB; transition: all .2s ease;
-      display: inline-flex; align-items: center; gap: 6px;
-    }
-    .modal-actions a:hover { background: #F3F4F6; }
-    .modal-body { flex: 1; display: flex; padding: 10px; }
-    .modal-body iframe {
-      width: 100%; height: 100%; border: none; border-radius: 10px; background: #f9fafb;
-    }
-
-    /* Botón de cierre cuadrado, flotante y externo */
-    .modal-close {
-      position: absolute; top: -18px; right: -18px;
-      width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 18px; border-radius: 6px; cursor: pointer;
-      background: #fff; color: #111827; border: 2px solid #000; box-shadow: 2px 2px 6px rgba(0,0,0,.3);
-    }
-    .modal-close:hover { background: #000; color: #fff; }
-
-    /* ===== Card estilo pro ===== */
-    .card {
-      background: #f7f7f7;
-      padding: 18px;
-      border-radius: 14px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
-      cursor: pointer;
-      text-align: center;
-      transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
-    }
-    .card:hover { transform: translateY(-2px); background: #f0f0f0; }
-    .card img { width: 118px; height: auto; margin-left: auto; margin-right: auto; }
-
-    /* ===== Carrusel refinado ===== */
-    .carousel-container {
-      position: relative;
-      max-width: 1100px;
-      margin: 36px auto 8px auto;
-      display: flex; align-items: center; justify-content: center;
-      padding: 0 8px;
-    }
-    .carousel-track-container { overflow: hidden; width: 100%; }
-    .carousel-track { display: flex; transition: transform 0.5s ease-in-out; }
-    .carousel-item { min-width: 25%; display: flex; justify-content: center; align-items: center; padding: 14px; }
-    .carousel-item img { width: 120px; height: auto; object-fit: contain; border-radius: 12px; transition: transform 0.3s ease; }
-    .carousel-item img:hover { transform: scale(1.06); }
-
-    .carousel-btn {
-      background: rgba(0,0,0,0.5); border: none; color: #fff; font-size: 26px;
-      padding: 8px 12px; cursor: pointer; border-radius: 9999px; transition: background 0.3s;
-      z-index: 2;
-    }
-    .carousel-btn:hover { background: rgba(0,0,0,0.8); }
-    .carousel-btn.prev { position: absolute; left: -6px; }
-    .carousel-btn.next { position: absolute; right: -6px; }
-    @media (max-width: 640px){
-      .carousel-item { min-width: 50%; }
-      .carousel-btn.prev { left: 2px; }
-      .carousel-btn.next { right: 2px; }
-    }
-
-    /* ===== Footer líneas animadas ===== */
-    .v-line {
-      position: absolute; top: -150px; width: 2px; height: 150px;
-      background: rgba(0,212,255,0.5); border-radius: 1px; animation: dropLine 6s linear infinite;
-    }
-    @keyframes dropLine {
-      0% { top: -150px; opacity: 0; }
-      50% { opacity: .6; }
-      100% { top: 100%; opacity: 0; }
-    }
-
-/* ===== TOUR POPUP ===== */
-.tour-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-
-.tour-card {
-  background: #ffffff;
-  border-radius: 18px;
-  width: 94%;
-  max-width: 500px;
-  box-shadow: 0 20px 40px rgba(0,0,0,.35);
-  overflow: hidden;
-  animation: tourFadeIn 0.35s ease;
-  position: relative;
-}
-
-.tour-image {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-.tour-title {
-  margin: 14px 16px 6px;
-  font-size: 1.15rem;
-  font-weight: 600;
-  text-align: center;
-  color: #111827;
-}
-
-.tour-text {
-  margin: 0 16px 14px;
-  font-size: 0.95rem;
-  text-align: center;
-  color: #4b5563;
-}
-
-.tour-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 10px;
-  padding: 0 16px 16px;
-}
-
-.tour-prev {
-  background: #e5e7eb;
-  color: #111827;
-  border: none;
-  padding: 10px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 0.85rem;
-}
-
-.tour-prev:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.tour-skip {
-  background: #3b82f6; /* AZUL */
-  color: #ffffff;
-  border: none;
-  padding: 10px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 0.85rem;
-}
-
-.tour-next {
-  background: #00055A;
-  color: #ffffff;
-  border: none;
-  padding: 10px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 0.85rem;
-}
-
-.tour-next:hover,
-.tour-skip:hover {
-  opacity: 0.9;
-}
-
-.tour-close {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: rgba(0,0,0,0.6);
-  color: #fff;
-  border: none;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-/* Responsive extra */
-@media (max-width: 480px) {
-  .tour-actions {
-    grid-template-columns: 1fr;
-  }
-}
-
-@keyframes tourFadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-
-
-
-
-    
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#00055A">
+<meta name="description" content="Portal administrativo del Instituto Pedagógico Amauta. Documentos, sistemas y herramientas para la gestión institucional.">
+<title>Amauta + Info | Portal administrativo</title>
+<style>
+:root{--navy:#00055a;--dark:#080d35;--red:#ff0d35;--gold:#ffb600;--ink:#202b45;--muted:#68738a;--line:#e3e8f1;--surface:#f7f9fc;--radius:20px;--shadow:0 15px 40px rgb(0 5 90 / 7%)}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:100px}body{margin:0;font-family:Inter,"Segoe UI",Arial,sans-serif;background:var(--surface);color:var(--ink);line-height:1.6}body:has(dialog[open]){overflow:hidden}a{color:inherit;text-decoration:none}button,input{font:inherit}button{cursor:pointer}img{display:block;max-width:100%}button:disabled{cursor:default;opacity:.35}[hidden]{display:none!important}:focus-visible{outline:3px solid #597feb;outline-offset:5px}.container{width:min(1180px,calc(100% - 64px));margin-inline:auto}.icon{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}.skip-link{position:fixed;top:-80px;left:16px;z-index:100;padding:12px 20px;background:white;color:var(--navy);border-radius:10px}.skip-link:focus{top:12px}
+.topbar{position:sticky;top:0;z-index:20;background:rgb(255 255 255 / 96%);border-bottom:1px solid var(--line);backdrop-filter:blur(14px)}.header-inner{min-height:86px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{display:inline-flex;align-items:center;gap:12px;flex-shrink:0}.brand-mark{display:grid;place-items:center;width:47px;height:47px;border-radius:13px;background:var(--navy);padding:5px;color:white;font-weight:750}.brand-mark img{width:100%;height:100%;object-fit:contain}.brand-name{display:block;font-size:22px;font-weight:750;letter-spacing:-.8px;color:var(--navy);line-height:1.2}.brand-name b{color:var(--red)}.brand-caption{display:block;font-size:9px;letter-spacing:1.7px;text-transform:uppercase;color:var(--muted);margin-top:5px}.nav{display:flex;align-items:center;gap:26px}.nav>a{font-size:12px;font-weight:650;color:var(--muted)}.nav>a:hover{color:var(--navy)}.button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:45px;padding:11px 19px;border-radius:10px;border:1px solid transparent;font-size:12px;font-weight:700;line-height:1.4;transition:background .2s,transform .2s}.button:hover{transform:translateY(-1px)}.button-primary,.nav a.button-primary,.nav a.button-primary:visited,.nav a.button-primary:hover{background:var(--navy);color:#fff}.button-primary:hover{background:#161b75}.button-light{background:white;color:var(--navy)}.button-outline{background:white;border-color:var(--line);color:var(--navy)}.button-ghost{border-color:rgb(255 255 255 / 30%);color:#fff;background:transparent}.icon-button{display:inline-grid;place-items:center;width:40px;height:40px;flex-shrink:0;border:1px solid var(--line);border-radius:11px;color:var(--navy);background:#fff;transition:background .2s}.icon-button:hover:not(:disabled){background:#edf1fc}
+/* Una sola capa de degradado; fotografía desplazada ligeramente a la derecha. */
+.hero{position:relative;isolation:isolate;overflow:hidden;background:var(--dark);color:white}.hero-image{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover;object-position:right center;transform:translateX(5%);z-index:0}.hero::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,rgba(8,13,53,1) 0%,rgba(8,13,53,.98) 12%,rgba(8,13,53,.92) 24%,rgba(8,13,53,.80) 36%,rgba(8,13,53,.60) 48%,rgba(8,13,53,.36) 60%,rgba(8,13,53,.16) 72%,rgba(8,13,53,.04) 85%,rgba(8,13,53,0) 100%)}.hero-inner{position:relative;z-index:2;padding-block:70px 76px;min-height:440px}.eyebrow{display:flex;align-items:center;gap:9px;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:750;color:var(--navy)}.eyebrow::before{content:"";width:18px;height:2px;background:var(--red);flex-shrink:0}.hero .eyebrow{color:#e2e7fb}.hero h1{font-size:clamp(38px,4.3vw,59px);line-height:1.08;font-weight:750;letter-spacing:-2px;margin:23px 0 20px;max-width:620px}.hero h1 span{color:#e1e7ff}.hero-description{max-width:440px;color:#e0e5f4;font-size:15px;line-height:1.8;margin:0 0 28px}.hero-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.hero-secondary{font-size:12px;font-weight:600;color:white;padding:12px 4px}.hero-secondary:hover{text-decoration:underline;text-underline-offset:5px}
+.quickbar{background:#fff;border-bottom:1px solid var(--line)}.quickbar-inner{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.quick-link{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:24px 26px;transition:background .2s}.quick-link+.quick-link{border-left:1px solid var(--line)}.quick-link:hover{background:#f5f7ff}.quick-label{display:flex;align-items:center;gap:14px;min-width:0}.quick-label>.icon{color:var(--navy);width:25px;height:25px}.quick-label strong{display:block;font-size:13px;font-weight:700}.quick-label small{display:block;font-size:11px;color:var(--muted);margin-top:3px}.quick-link>.icon{width:17px;color:#8b95aa}
+.section{padding-block:52px}.section-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:26px}h2{font-size:clamp(24px,2.8vw,32px);line-height:1.22;letter-spacing:-.9px;margin:10px 0 0;color:var(--navy)}.section-description{margin:10px 0 0;font-size:13px;color:var(--muted)}.result-count{font-size:11px;color:var(--muted);white-space:nowrap;padding-bottom:4px}.search-box{display:flex;align-items:center;gap:13px;padding:0 17px;min-height:54px;border:1px solid var(--line);background:white;border-radius:12px}.search-box>.icon{color:#8792a9}.search-box:focus-within{border-color:#7d92d0;box-shadow:0 0 0 3px rgb(0 5 90 / 5%)}.search-box input{flex:1;min-width:0;width:100%;padding:14px 0;background:none;border:0;outline:none;font-size:13px;color:var(--ink)}.search-box input:focus-visible{outline:none}.clear-search{width:31px;height:31px;border:0}.filters{display:flex;gap:8px;flex-wrap:wrap;margin:17px 0 25px}.filter{padding:9px 15px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--muted);font-size:11px;font-weight:650;transition:background .2s,border-color .2s}.filter:hover{border-color:#b9c1d7;color:var(--navy)}.filter[aria-pressed=true]{background:var(--navy);border-color:var(--navy);color:white}
+.resource-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}.resource-card{display:flex;flex-direction:column;min-width:0;min-height:265px;padding:27px;border:1px solid var(--line);border-radius:18px;background:white;transition:transform .22s,box-shadow .22s,border-color .22s}.resource-card:hover{transform:translateY(-4px);border-color:#bbc6e3;box-shadow:var(--shadow)}.resource-top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:23px}.resource-image{display:grid;place-items:center;width:76px;height:76px;flex-shrink:0;background:transparent}.resource-image img{width:100%;height:100%;object-fit:contain}.resource-image>.icon{width:34px;height:34px;color:var(--navy)}.resource-category{max-width:130px;font-size:9px;letter-spacing:1px;text-transform:uppercase;text-align:right;color:#7c869a;font-weight:750}.resource-card h3{font-size:16px;line-height:1.45;letter-spacing:-.25px;margin:0 0 10px;font-weight:700;color:var(--ink)}.resource-description{font-size:12px;color:var(--muted);line-height:1.75;margin:0 0 22px}.resource-action{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;padding-top:16px;border-top:1px solid #eef1f6;font-size:11px;font-weight:700;color:var(--navy)}.resource-action .icon{width:17px;height:17px}.empty-state{text-align:center;padding:38px 20px;background:white;border:1px dashed #bdc7de;border-radius:16px}.empty-state p{font-size:13px;color:var(--muted)}
+.ai-banner{display:flex;align-items:center;justify-content:space-between;gap:25px;margin-top:25px;padding:28px 30px;background:#ecf1ff;border:1px solid #dce5ff;border-radius:17px}.ai-copy{display:flex;align-items:center;gap:20px}.ai-copy img{width:77px;height:77px;object-fit:contain}.ai-banner h3{font-size:20px;letter-spacing:-.5px;color:var(--navy);margin:0 0 6px}.ai-banner p{margin:0;font-size:13px;color:#596789;max-width:550px}.ai-banner .button{flex-shrink:0}
+.experiences{background:#fff;border-block:1px solid var(--line)}.experience-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}.experience{overflow:hidden;border:1px solid var(--line);border-radius:var(--radius)}.experience-media{aspect-ratio:16/10;overflow:hidden;background:#f1f4f9;padding:12px}.experience-media img{width:100%;height:100%;object-fit:contain;transition:transform .5s}.experience:hover img{transform:scale(1.025)}.experience-content{padding:25px 27px 28px}.experience-content small{color:var(--red);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:750}.experience h3{font-size:22px;line-height:1.3;letter-spacing:-.6px;color:var(--navy);margin:7px 0 12px}.experience p{font-size:13px;color:var(--muted);line-height:1.8;margin:0}.experience p+p{margin-top:12px}
+.carousel-actions{display:flex;gap:8px}.platform-track{display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 48px)/4);gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:4px 2px 16px}.platform-track::-webkit-scrollbar{display:none}.platform{scroll-snap-align:start;min-width:0;border:1px solid var(--line);border-radius:15px;background:#fff;padding:20px;transition:transform .2s,box-shadow .2s}.platform:hover{transform:translateY(-3px);box-shadow:var(--shadow)}.platform-media{display:grid;place-items:center;height:110px;padding:10px;background:#f7f9fc;border-radius:10px;margin-bottom:17px}.platform-media img{width:100%;height:90px;object-fit:contain;border-radius:5px}.platform strong{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;line-height:1.5}.platform strong .icon{width:15px;height:15px;color:#8792a9}
+.footer{background:var(--dark);color:#bac3de;padding-top:45px}.footer-grid{display:grid;grid-template-columns:1.35fr 1fr 1fr 1fr;gap:35px;padding-bottom:35px}.footer .brand-name{color:white}.footer .brand-caption{color:#a1abc9}.footer .brand-mark{background:rgb(255 255 255 / 8%)}.footer p{font-size:12px;max-width:310px}.footer h3{color:white;font-size:12px;margin:0 0 15px}.footer ul{padding:0;margin:0;list-style:none;display:grid;gap:9px;font-size:12px}.footer a:hover{color:white}.footer-contact{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:white;margin-top:12px}.footer-contact .icon{width:17px}.footer-bottom{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:20px 0;border-top:1px solid rgb(255 255 255 / 10%);font-size:10px}.footer .button{font-size:11px;min-height:38px}
+dialog{color:var(--ink);background:white;padding:0;border:1px solid var(--line);border-radius:21px;max-height:90dvh;box-shadow:0 35px 100px rgb(0 0 0 / 28%)}dialog::backdrop{background:rgb(5 10 36 / 72%);backdrop-filter:blur(6px)}dialog[open]{animation:appear .2s ease-out}.document-dialog{width:min(1100px,calc(100% - 32px))}.dialog-header{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 22px;border-bottom:1px solid var(--line)}.dialog-heading{min-width:0}.dialog-heading small{display:block;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-size:9px}.dialog-heading h2{margin:4px 0 0;font-size:16px;letter-spacing:-.3px}.dialog-tools{display:flex;align-items:center;gap:8px;flex-shrink:0}.dialog-tools .button{min-height:37px;padding:9px 12px;font-size:11px}.document-viewer{display:block;width:100%;height:65dvh;border:0;background:#f1f3f8}.dialog-note{font-size:11px;color:var(--muted);padding:12px 22px;margin:0}.dialog-note a{text-decoration:underline}.welcome-dialog{width:min(570px,calc(100% - 32px))}.welcome-media{position:relative;background:#eef1fa}.welcome-media img{width:100%;height:auto;max-height:49dvh;object-fit:contain}.welcome-close{position:absolute;top:12px;right:12px;background:rgb(255 255 255 / 95%)}.welcome-content{padding:25px 30px 28px}.welcome-content h2{font-size:27px;margin-top:10px}.welcome-content p{font-size:13px;color:var(--muted);margin:12px 0 20px}.welcome-meta{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:13px}.welcome-meta .eyebrow{font-size:9px}.welcome-count{font-size:11px;color:var(--muted)}.welcome-actions{display:flex;align-items:center;gap:10px}.welcome-actions .button-primary{margin-left:auto}.welcome-skip{background:none;border:0;color:var(--muted);font-size:12px;padding:10px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}@keyframes appear{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@media(min-width:1400px){.hero-inner{padding-block:82px 88px}}
+@media(max-width:1000px){.nav{gap:18px}.nav>a:not(.button){display:none}.resource-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.quick-link{padding-inline:16px}.platform-track{grid-auto-columns:calc((100% - 32px)/3)}.footer-grid{grid-template-columns:1.3fr 1fr;gap:28px}}
+@media(max-width:720px){.container{width:calc(100% - 32px)}.header-inner{min-height:75px;gap:12px}.brand-name{font-size:18px}.brand-caption{font-size:8px;letter-spacing:1px}.brand-mark{width:41px;height:41px}.nav .button{min-height:39px;padding:9px 12px;font-size:11px}.hero-inner{padding-block:48px 52px;min-height:390px}.hero-image{object-position:70% center;transform:translateX(3%)}.hero::before{background:linear-gradient(90deg,rgba(8,13,53,.95) 0%,rgba(8,13,53,.82) 30%,rgba(8,13,53,.56) 60%,rgba(8,13,53,.24) 100%)}.hero h1{letter-spacing:-1.5px;font-size:40px;max-width:430px}.hero-description{font-size:14px;max-width:360px}.hero-actions{gap:14px}.quick-link{padding:18px 10px;justify-content:center}.quick-link>.icon,.quick-label small{display:none}.quick-label{gap:8px}.quick-label strong{font-size:11px}.quick-label>.icon{width:20px;height:20px}.section{padding-block:36px}.section-heading{align-items:flex-start;gap:10px}.result-count{font-size:10px;padding-top:10px}.resource-grid{gap:14px}.resource-card{padding:20px;min-height:255px}.resource-image{width:61px;height:61px}.resource-top{flex-wrap:wrap;gap:10px;margin-bottom:18px}.resource-category{text-align:left;font-size:8px}.resource-card h3{font-size:14px}.resource-description{font-size:12px}.filter{padding:8px 12px;font-size:10px}.ai-banner{padding:22px;align-items:flex-start;flex-direction:column;gap:18px}.ai-copy{gap:14px}.ai-copy img{width:61px;height:61px}.ai-banner h3{font-size:18px}.experience-grid{grid-template-columns:1fr;gap:20px}.experience-content{padding:22px}.platform-track{grid-auto-columns:calc((100% - 16px)/2)}.platform{padding:15px}.footer-grid{grid-template-columns:1fr 1fr;gap:28px}.footer-brand{grid-column:1/-1}.dialog-header{padding:15px;flex-wrap:wrap}.dialog-tools{width:100%}.dialog-tools .icon-button{margin-left:auto}.document-viewer{height:58dvh}.welcome-content{padding:22px}.welcome-content h2{font-size:24px}.welcome-media img{max-height:43dvh}}
+@media(max-width:420px){.resource-grid{grid-template-columns:1fr}.resource-card{padding:24px;min-height:auto}.resource-top{flex-wrap:nowrap}.resource-category{text-align:right}.resource-card h3{font-size:16px}.brand-caption{letter-spacing:.5px;font-size:7px}.nav .button .icon{display:none}.quick-label{flex-direction:column;text-align:center;gap:5px}.platform-track{grid-auto-columns:78%}.footer-grid{grid-template-columns:1fr}.footer-brand{grid-column:auto}.hero h1{font-size:36px}.welcome-actions{gap:6px}.welcome-actions .button{padding:10px 12px;font-size:11px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+.resource-warning{align-self:flex-start;display:inline-flex;margin:0 0 10px;padding:3px 8px;border-radius:6px;background:#fff5df;color:#805500;font-size:10px;font-weight:700}
+</style>
 </head>
-
-<body class="bg-gray-50 flex flex-col min-h-screen">
-
-  <!-- Header compacto y pro -->
-  <header class="w-full bg-primary text-primary-foreground shadow">
-    <div class="max-w-7xl mx-auto px-3 sm:px-4 py-3 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <img src="logo_blanco_sin_ipa.png" alt="Logo IPA Amauta" class="w-12 h-12 sm:w-14 sm:h-14"/>
-        <h1 class="text-xl sm:text-2xl font-bold tracking-tight">Amauta + Info</h1>
-      </div>
-      <div class="text-sm sm:text-base">¡Hola, Administrativo Amautino!</div>
-    </div>
-  </header>
-
-
-<!-- ========== POPUP RECORRIDO ========== -->
-<div id="tourOverlay" class="tour-overlay">
-  <div class="tour-card">
-
-    <!-- Botón cerrar -->
-    <button class="tour-close" id="tourCloseBtn">X</button>
-
-    <!-- Imagen -->
-    <img
-      id="tourImage"
-      src=""
-      alt="Guía IPA Amauta"
-      class="tour-image"
-    />
-
-    <!-- Texto -->
-    <h3 id="tourTitle" class="tour-title"></h3>
-    <p id="tourText" class="tour-text"></p>
-
-    <!-- Acciones -->
-    <div class="tour-actions">
-      
-
-<button id="tourPrevBtn" class="tour-next">
-        Anterior
-      </button>
-<button id="tourSkipBtn" class="">
-        Omitir
-      </button>
-      <button id="tourNextBtn" class="tour-next">
-        Siguiente 
-      </button>
-    </div>
-
-  </div>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+<symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"/></symbol>
+<symbol id="i-document" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M8 13h8M8 17h5"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24"><path d="M12 5c-3-2-7-2-10-1v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1ZM12 5v15"/></symbol>
+<symbol id="i-left" viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></symbol>
+<symbol id="i-right" viewBox="0 0 24 24"><path d="m10 6 6 6-6 6"/></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24"><path d="m5 3 4 1 1 5-3 2a15 15 0 0 0 6 6l2-3 5 1 1 4c-1 5-9 1-13-3S0 4 5 3Z"/></symbol>
+<symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></symbol>
+</svg>
+<a class="skip-link" href="#recursos">Ir a los recursos</a>
+<header class="topbar"><div class="container header-inner">
+<a class="brand" href="#inicio" aria-label="Amauta más Info, inicio"><span class="brand-mark"><img src="logo_blanco_sin_ipa.png" alt=""></span><span><span class="brand-name">Amauta <b>+</b> Info</span><span class="brand-caption">Portal administrativo</span></span></a>
+<nav class="nav" aria-label="Navegación principal"><a href="#recursos">Recursos administrativos</a><a href="#comunidad">Comunidad</a><a href="#plataformas">Plataformas</a><a class="button button-primary" href="https://amauta.q10.com" target="_blank" rel="noopener noreferrer">Ingresar a Q10 <svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></a></nav>
+</div></header>
+<main id="inicio">
+<section class="hero" aria-labelledby="heroTitle"><img class="hero-image" src="portalAdmin.jpg" alt="" fetchpriority="high"><div class="container hero-inner"><div class="eyebrow">Instituto Pedagógico Amauta</div><h1 id="heroTitle">Tu gestión conecta.<br><span>Tu portal lo simplifica.</span></h1><p class="hero-description">Documentos, sistemas y herramientas para acompañar tu labor administrativa. Encuentra lo que necesitas y conecta con cada área de Amauta.</p><div class="hero-actions"><a class="button button-light" href="#recursos">Explorar recursos <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a><a class="hero-secondary" href="#plataformas">Plataformas institucionales</a></div></div></section>
+<div class="quickbar"><div class="container quickbar-inner"><a class="quick-link" href="https://amauta-ipa.github.io/Sistema_Got_Eyes/index.html" target="_blank" rel="noopener noreferrer"><span class="quick-label"><svg class="icon" aria-hidden="true"><use href="#i-folder"/></svg><span><strong>Gestión institucional</strong><small>Accede al SGM</small></span></span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></a><a class="quick-link" href="https://drive.google.com/drive/folders/1DX--D6FsbHH8Yv6TSLqyikTn5bNfCvev?usp=sharing" target="_blank" rel="noopener noreferrer"><span class="quick-label"><svg class="icon" aria-hidden="true"><use href="#i-document"/></svg><span><strong>Drive de procesos</strong><small>Documentación institucional</small></span></span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></a><a class="quick-link" href="https://centro-respuestas-ipa.procesos722548.chatgpt.site/" target="_blank" rel="noopener noreferrer"><span class="quick-label"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg><span><strong>Centro de conocimiento</strong><small>Información para tu trabajo</small></span></span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></a></div></div>
+<section class="section container" id="recursos" aria-labelledby="resourcesTitle"><div class="section-heading"><div><div class="eyebrow">Centro de información administrativa</div><h2 id="resourcesTitle">Todo para tu gestión diaria</h2><p class="section-description">Consulta los documentos, carpetas y sistemas de cada área en un solo lugar.</p></div><span class="result-count" id="resourceCount" role="status" aria-live="polite">54 recursos</span></div>
+<div class="search-box"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><label class="sr-only" for="resourceSearch">Buscar recursos administrativos</label><input id="resourceSearch" type="search" placeholder="Busca por nombre: admisión, pagos, expedientes, horarios…" autocomplete="off" aria-controls="resourceGrid"><button type="button" class="icon-button clear-search" id="clearSearch" aria-label="Limpiar búsqueda" hidden><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div>
+<div class="filters" role="group" aria-label="Filtrar recursos por categoría">
+<button class="filter" data-filter="Todos" aria-pressed="true">Todos</button><button class="filter" data-filter="Gestión institucional" aria-pressed="false">Gestión institucional</button><button class="filter" data-filter="Académico" aria-pressed="false">Académico</button><button class="filter" data-filter="Personas" aria-pressed="false">Personas</button><button class="filter" data-filter="Admisión" aria-pressed="false">Admisión</button><button class="filter" data-filter="Finanzas" aria-pressed="false">Finanzas</button><button class="filter" data-filter="Plataformas" aria-pressed="false">Plataformas</button><button class="filter" data-filter="Herramientas e IA" aria-pressed="false">Herramientas e IA</button><button class="filter" data-filter="Validaciones" aria-pressed="false">Validaciones</button></div>
+<div class="resource-grid" id="resourceGrid">
+<a class="resource-card" href="https://drive.google.com/file/d/1Pzna5GG6tCkXDkpKUCfJyIjfEpee1nPQ/view?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Admisión" data-file="1Pzna5GG6tCkXDkpKUCfJyIjfEpee1nPQ">
+<div class="resource-top"><span class="resource-image"><img src="Manual_Uso_Q10.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Admisión</span></div>
+<h3>Manual de inscripciones de admisión</h3><p class="resource-description">Consulta las indicaciones para registrar las inscripciones de admisión.</p><span class="resource-action"><span>Consultar documento</span><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></span></a>
+<a class="resource-card" href="https://www.youtube.com/@ipaAmauta" target="_blank" rel="noopener noreferrer" data-category="Plataformas">
+<div class="resource-top"><span class="resource-image"><img src="Youtube.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Plataformas</span></div>
+<h3>Canal de YouTube</h3><p class="resource-description">Accede a los contenidos audiovisuales del canal institucional.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://amauta-ipa.github.io/RespositorioAmauta/ini.html" target="_blank" rel="noopener noreferrer" data-category="Plataformas">
+<div class="resource-top"><span class="resource-image"><img src="Repositorio Institucional.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Plataformas</span></div>
+<h3>Repositorio Institucional</h3><p class="resource-description">Consulta la producción académica del repositorio institucional.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://amauta-ipa.github.io/Amauta-Info/amauta+info.html" target="_blank" rel="noopener noreferrer" data-category="Plataformas">
+<div class="resource-top"><span class="resource-image"><img src="Portal del Docente.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Plataformas</span></div>
+<h3>Portal del Estudiante</h3><p class="resource-description">Ingresa al centro de información y recursos para estudiantes.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://amauta-ipa.github.io/Amauta-Info---Docentes/amauta+info.html" target="_blank" rel="noopener noreferrer" data-category="Plataformas">
+<div class="resource-top"><span class="resource-image"><img src="desarrolloProfesor.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Plataformas</span></div>
+<h3>Portal del Docente IPA</h3><p class="resource-description">Encuentra documentos y herramientas para la comunidad docente.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://amauta-ipa.github.io/Amauta-Info---Admision/amauta+info.html" target="_blank" rel="noopener noreferrer" data-category="Admisión">
+<div class="resource-top"><span class="resource-image"><img src="BackUp Aulas virtuales.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Admisión</span></div>
+<h3>Portal de Admisión</h3><p class="resource-description">Accede a los recursos del proceso de admisión.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://www.digitaliapublishing.com/" target="_blank" rel="noopener noreferrer" data-category="Plataformas">
+<div class="resource-top"><span class="resource-image"><img src="Biblioteca.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Plataformas</span></div>
+<h3>Biblioteca</h3><p class="resource-description">Consulta los recursos de la biblioteca digital Digitalia.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://amauta.q10.com" target="_blank" rel="noopener noreferrer" data-category="Plataformas">
+<div class="resource-top"><span class="resource-image"><img src="PPTSustentacionTesis.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Plataformas</span></div>
+<h3>Plataforma Q10</h3><p class="resource-description">Ingresa al entorno de gestión académica institucional.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://monica.im/share/bot?botId=qcAnZLpM" target="_blank" rel="noopener noreferrer" data-category="Herramientas e IA">
+<div class="resource-top"><span class="resource-image"><img src="robot_ipa.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Herramientas e IA</span></div>
+<h3>Amauta IA</h3><p class="resource-description">Encuentra apoyo adicional para tus consultas con Amauta IA.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://trello.com/b/2L4kYBtq/trello-2025" target="_blank" rel="noopener noreferrer" data-category="Gestión institucional">
+<div class="resource-top"><span class="resource-image"><img src="Trello (1).png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Gestión institucional</span></div>
+<h3>Gestión del trabajo · Trello</h3><p class="resource-description">Accede al tablero de organización y seguimiento de tareas en Trello.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1yYWtjgFFsQkvwXCIxc4pzJO1trgNmfy1?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Personas">
+<div class="resource-top"><span class="resource-image"><img src="Personal - Vacaciones - Permisos.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Personas</span></div>
+<h3>Gestión de personas: vacaciones, permisos y tardanzas</h3><p class="resource-description">Consulta los archivos de vacaciones, permisos y tardanzas del personal.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/100EWUMch_zkkNVrXvMJcxKNfYNHsOSMb?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Académico">
+<div class="resource-top"><span class="resource-image"><img src="Taller de fortalecimiento.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Académico</span></div>
+<h3>Taller de Fortalecimiento</h3><p class="resource-description">Accede a los documentos del taller de fortalecimiento.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1Hynnp7B7t7pX2yzgHORlG4SSCA5WdjVC?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Personas">
+<div class="resource-top"><span class="resource-image"><img src="Evento de graduación.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Personas</span></div>
+<h3>Evento de Graduación</h3><p class="resource-description">Consulta la documentación y coordinación del evento de graduación.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1EgNoe7fQOr9rxLmr-0n2JyMfKNk5l1rp?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Personas">
+<div class="resource-top"><span class="resource-image"><img src="Aniversario.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Personas</span></div>
+<h3>Aniversario</h3><p class="resource-description">Accede a los archivos de organización del aniversario institucional.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1xePpaZjfZEb6P97kd4SR5vcbpqfFkgPC?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Académico">
+<div class="resource-top"><span class="resource-image"><img src="Taller de tesis.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Académico</span></div>
+<h3>Taller de Tesis</h3><p class="resource-description">Consulta los documentos del taller de tesis.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/19641eHkvNKmHyCRM1PobX5PfJnsmwsAY?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Académico">
+<div class="resource-top"><span class="resource-image"><img src="BackUp Aulas virtuales.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Académico</span></div>
+<h3>Respaldo de aulas virtuales</h3><p class="resource-description">Accede a las copias de respaldo de las aulas virtuales.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1C-DPW1Oyw_hFOXfInOPGia6hhrEocFe-?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Académico">
+<div class="resource-top"><span class="resource-image"><img src="Carpeta pedagógica docente (CV, subsanación).png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Académico</span></div>
+<h3>Carpeta pedagógica docente (CV y subsanación)</h3><p class="resource-description">Consulta la carpeta docente con CV y documentación de subsanación.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://gptzero.me/es" target="_blank" rel="noopener noreferrer" data-category="Personas">
+<div class="resource-top"><span class="resource-image"><img src="ReglamentoDocente.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Personas</span></div>
+<h3>Reglamento Interno de Trabajo</h3><span class="resource-warning">Enlace por revisar</span><p class="resource-description">El enlace recibido apunta a GPTZero. Debe actualizarse por la dirección del reglamento interno de trabajo.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://github.com/Amauta-IPA?tab=repositories" target="_blank" rel="noopener noreferrer" data-category="Gestión institucional">
+<div class="resource-top"><span class="resource-image"><img src="GITHUB (2).png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Gestión institucional</span></div>
+<h3>Repositorios de GitHub</h3><p class="resource-description">Accede a los repositorios de código de Amauta en GitHub.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1UD7bsqOJqLj_oU6NFw4RNTp1tQ7vvkqb?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Admisión">
+<div class="resource-top"><span class="resource-image"><img src="Reglamento_Institucional.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Admisión</span></div>
+<h3>Área de Ventas</h3><p class="resource-description">Consulta los archivos y documentos del área de ventas.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1zLELlzVMxI93n7geWlkSNAugXXv8_Jnr?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Académico">
+<div class="resource-top"><span class="resource-image"><img src="FichaPractica_I - VI.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Académico</span></div>
+<h3>Horas de docentes</h3><p class="resource-description">Accede a la documentación de horas de los docentes.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1lFJsYO9z2wLcYCMbQGBiMGCTAOToERZO?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Finanzas">
+<div class="resource-top"><span class="resource-image"><img src="Manual_Pagos.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Finanzas</span></div>
+<h3>Pagos y boletas de Ciencias Sociales</h3><p class="resource-description">Consulta las boletas y archivos de pagos de Ciencias Sociales.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/19SNS1sNX3ip5CdOO8afY1SZ3tKX3rhoq?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Finanzas">
+<div class="resource-top"><span class="resource-image"><img src="Tarifario.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Finanzas</span></div>
+<h3>Boletas de mandiles y polos</h3><p class="resource-description">Accede a las boletas correspondientes a mandiles y polos.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://amauta-ipa.github.io/Sistema_Got_Eyes/index.html" target="_blank" rel="noopener noreferrer" data-category="Gestión institucional">
+<div class="resource-top"><span class="resource-image"><img src="Taller de fortalecimiento.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Gestión institucional</span></div>
+<h3>Sistema Integrado de Gestión y Monitoreo Institucional - IPA (SGM)</h3><p class="resource-description">Ingresa al Sistema Integrado de Gestión y Monitoreo Institucional.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://amauta-srg.vercel.app/" target="_blank" rel="noopener noreferrer" data-category="Gestión institucional">
+<div class="resource-top"><span class="resource-image"><img src="PPTSustentacionTesis.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Gestión institucional</span></div>
+<h3>Sistema de Gestión y seguimiento - SIGESE</h3><p class="resource-description">Accede al sistema de gestión y seguimiento SIGESE.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1Cuhglc5wiXwdBysccrAVZIDlG9cQ2Cuq?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Académico">
+<div class="resource-top"><span class="resource-image"><img src="lineamientosTesisPresentacion.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Académico</span></div>
+<h3>Seguimiento de Egresados</h3><p class="resource-description">Consulta los archivos de seguimiento de egresados.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1Sc7nZLvro2Eikg8jGY3Q_daXPGmH0izc?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Académico">
+<div class="resource-top"><span class="resource-image"><img src="OrientacionSustentacionTesis.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Académico</span></div>
+<h3>Seguimiento de Docentes</h3><p class="resource-description">Accede a los documentos de seguimiento docente.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1tQoPJz0aLI7J3bQ8OhLTaf-TH_eC53_8?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Académico">
+<div class="resource-top"><span class="resource-image"><img src="Reglamento_Institucional.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Académico</span></div>
+<h3>Seguimiento de Estudiantes</h3><p class="resource-description">Consulta los archivos de seguimiento de estudiantes.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1zq0k-Isk0EDSqnUK5q1vVIMf1WI9RY0i?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Académico">
+<div class="resource-top"><span class="resource-image"><img src="Canales_Atencion.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Académico</span></div>
+<h3>Información actual de estudiantes</h3><p class="resource-description">Accede a la información actual de estudiantes.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/12c4I44a9vQiWeJMtAs_xJmubRNjy05Cv?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Académico">
+<div class="resource-top"><span class="resource-image"><img src="Canales_Atencion.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Académico</span></div>
+<h3>Información actual de egresados</h3><p class="resource-description">Consulta la información actual de egresados.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1DX--D6FsbHH8Yv6TSLqyikTn5bNfCvev?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Gestión institucional">
+<div class="resource-top"><span class="resource-image"><img src="Manual_Uso_Q10.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Gestión institucional</span></div>
+<h3>Drive de Procesos</h3><p class="resource-description">Encuentra los documentos de los procesos institucionales.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1OaUHLUNJBvyLte4e4Cg7Qf7oKxBymM7D?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Gestión institucional">
+<div class="resource-top"><span class="resource-image"><img src="Repositorio Institucional.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Gestión institucional</span></div>
+<h3>Gestión Institucional - Supervisiones DRELM / DIFOID</h3><p class="resource-description">Consulta la documentación para supervisiones de DRELM y DIFOID.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1lisYE3oZOV9_gxjGZOqgsDra7uhm8eQG?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Admisión">
+<div class="resource-top"><span class="resource-image"><img src="Reglamento_Prac_Invest.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Admisión</span></div>
+<h3>Documentos para admisión</h3><p class="resource-description">Accede a los documentos necesarios para el proceso de admisión.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://iespamauta.pseperu.com/ecommerce" target="_blank" rel="noopener noreferrer" data-category="Finanzas">
+<div class="resource-top"><span class="resource-image"><img src="Portal del Docente.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Finanzas</span></div>
+<h3>Tienda Virtual</h3><p class="resource-description">Ingresa a la tienda virtual institucional.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://iespamauta.pseperu.com/login" target="_blank" rel="noopener noreferrer" data-category="Finanzas">
+<div class="resource-top"><span class="resource-image"><img src="Taller de fortalecimiento.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Finanzas</span></div>
+<h3>Tecnovo</h3><p class="resource-description">Accede al sistema Tecnovo mediante su pantalla de inicio de sesión.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1M7FYlgIqVjd_MpQAE1TD2VwjVpCZ8KBJ" target="_blank" rel="noopener noreferrer" data-category="Gestión institucional">
+<div class="resource-top"><span class="resource-image"><img src="OrientacionSustentacionTesis.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Gestión institucional</span></div>
+<h3>Expedientes IPA</h3><p class="resource-description">Consulta los expedientes institucionales de IPA.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1nSxjETKOV0W2pezNaiGx-Tac6NyzWcdT?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Académico">
+<div class="resource-top"><span class="resource-image"><img src="Manual_Uso_Q10.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Académico</span></div>
+<h3>Actas y nóminas de matrícula IPA</h3><p class="resource-description">Accede a las actas y nóminas de matrícula institucionales.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1ifgH6IVLLmoOa44Bbh59NQ-vF65lBCtT?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Académico">
+<div class="resource-top"><span class="resource-image"><img src="Personal - Vacaciones - Permisos.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Académico</span></div>
+<h3>Información de exámenes de subsanación</h3><p class="resource-description">Consulta la información de los exámenes de subsanación.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1MAyt5EnHon_iKiWtfkckxcp-I7SHAQq5?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Académico">
+<div class="resource-top"><span class="resource-image"><img src="lineamientosTesisPresentacion.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Académico</span></div>
+<h3>Semana Cero IPA</h3><p class="resource-description">Accede a los documentos de organización de la Semana Cero.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1EXtWWykxDY_VaXAiqXG5tPeAW-YQgow8?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Personas">
+<div class="resource-top"><span class="resource-image"><img src="Biblioteca.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Personas</span></div>
+<h3>Convocatoria de Docentes</h3><p class="resource-description">Consulta los archivos del proceso de convocatoria docente.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1Tw3pRFWgSdYcSKPqHnHF6_wSsGI34iBq?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Admisión">
+<div class="resource-top"><span class="resource-image"><img src="Carpeta pedagógica docente (CV, subsanación).png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Admisión</span></div>
+<h3>Inducción para el Examen de Admisión</h3><p class="resource-description">Accede a los documentos de inducción para el examen de admisión.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1tcI0szAtjezda6c002T6_oqINJKj5E2C?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Personas">
+<div class="resource-top"><span class="resource-image"><img src="Reglamento_Institucional.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Personas</span></div>
+<h3>Convocatoria de Administrativos</h3><p class="resource-description">Consulta los archivos de la convocatoria de personal administrativo.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1ZlzDKxaOhDjGOXZjK3Ui2Q8BSRvP6GHf?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Académico">
+<div class="resource-top"><span class="resource-image"><img src="Repositorio Institucional.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Académico</span></div>
+<h3>Área académica</h3><p class="resource-description">Encuentra la documentación del área académica.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://amauta-ipa.github.io/Diploma_Egresados_IPA/validacionQR.html" target="_blank" rel="noopener noreferrer" data-category="Validaciones">
+<div class="resource-top"><span class="resource-image"><img src="DIPLOMA DE EGRESADO.jpeg" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Validaciones</span></div>
+<h3>Validar diploma de egresado</h3><p class="resource-description">Accede al portal de validación de diplomas de egresado.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://amauta-ipa.github.io/Constancia_Egresado/validacionQR.html" target="_blank" rel="noopener noreferrer" data-category="Validaciones">
+<div class="resource-top"><span class="resource-image"><img src="CONSTANCIA DE EGRESADO.jpeg" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Validaciones</span></div>
+<h3>Validar constancia de egresado</h3><p class="resource-description">Consulta la validación de constancias de egresado.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://amauta-ipa.github.io/Constancia_Estudios_EnCurso/validacionQR.html" target="_blank" rel="noopener noreferrer" data-category="Validaciones">
+<div class="resource-top"><span class="resource-image"><img src="CONSTANCIA DE ESTUDIOS EN CURSO.jpeg" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Validaciones</span></div>
+<h3>Validar constancia de estudios en curso</h3><p class="resource-description">Accede a la validación de constancias de estudios en curso.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://amauta-ipa.github.io/Constancia_Estudios_Culminado/validacionQR.html" target="_blank" rel="noopener noreferrer" data-category="Validaciones">
+<div class="resource-top"><span class="resource-image"><img src="CONSTANCIA DE ESTUDIOS CULMINADO.jpeg" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Validaciones</span></div>
+<h3>Validar constancia de estudios culminados</h3><p class="resource-description">Consulta la validación de constancias de estudios culminados.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://amauta-ipa.github.io/Certi_Cenfocap/validacionQR.html" target="_blank" rel="noopener noreferrer" data-category="Validaciones">
+<div class="resource-top"><span class="resource-image"><img src="CERTIFICADO CENFOCAP O AUXILIAR.jpeg" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Validaciones</span></div>
+<h3>Validar certificado de CENFOCAP</h3><p class="resource-description">Accede a la validación de certificados de CENFOCAP.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://drive.google.com/drive/folders/1auJRFAcdxweo6B2pkm-G2UQuchRHpQ4Y?usp=sharing" target="_blank" rel="noopener noreferrer" data-category="Personas">
+<div class="resource-top"><span class="resource-image"><img src="Aniversario.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Personas</span></div>
+<h3>Cumpleaños de docentes y administrativos</h3><p class="resource-description">Consulta los archivos de cumpleaños de docentes y administrativos.</p><span class="resource-action"><span>Abrir carpeta</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://amauta-ipa.github.io/Sistema-de-Informaci-n-Institucional-SINI-/" target="_blank" rel="noopener noreferrer" data-category="Gestión institucional">
+<div class="resource-top"><span class="resource-image"><img src="PPTSustentacionTesis.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Gestión institucional</span></div>
+<h3>Sistema de Información Institucional - SINI</h3><p class="resource-description">Ingresa al Sistema de Información Institucional SINI.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://generador-sesiones-docentes.procesos722548.chatgpt.site/" target="_blank" rel="noopener noreferrer" data-category="Herramientas e IA">
+<div class="resource-top"><span class="resource-image"><img src="Portal del Docente.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Herramientas e IA</span></div>
+<h3>AMAUTA Sesión PRO con IA</h3><p class="resource-description">Accede al generador de sesiones de aprendizaje con IA.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://centro-respuestas-ipa.procesos722548.chatgpt.site/" target="_blank" rel="noopener noreferrer" data-category="Gestión institucional">
+<div class="resource-top"><span class="resource-image"><img src="desarrolloProfesor.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Gestión institucional</span></div>
+<h3>Centro de Conocimiento Institucional</h3><p class="resource-description">Consulta el centro de conocimiento institucional de Amauta.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://amauta.edu.pe/" target="_blank" rel="noopener noreferrer" data-category="Plataformas">
+<div class="resource-top"><span class="resource-image"><img src="BackUp Aulas virtuales.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Plataformas</span></div>
+<h3>Página Web Oficial</h3><p class="resource-description">Visita la página web oficial de Amauta.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
+<a class="resource-card" href="https://sistema-horarios-ipa.procesos722548.chatgpt.site/" target="_blank" rel="noopener noreferrer" data-category="Académico">
+<div class="resource-top"><span class="resource-image"><img src="Biblioteca.png" alt="" loading="lazy" decoding="async"></span><span class="resource-category">Académico</span></div>
+<h3>Sistema Inteligente de Creación y Análisis de Horarios IPA</h3><p class="resource-description">Accede al sistema de creación y análisis de horarios IPA.</p><span class="resource-action"><span>Abrir recurso</span><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></span></a>
 </div>
-<!-- =================================== -->
-
-
+<div class="empty-state" id="emptyState" hidden><strong>No encontramos recursos con esa búsqueda.</strong><p>Prueba con otra palabra o consulta todas las categorías.</p><button class="button button-primary" id="resetFilters">Ver todos los recursos</button></div>
+<noscript><p>Los recursos se pueden abrir directamente. Activa JavaScript para utilizar el buscador, los filtros y las vistas previas.</p></noscript>
+<aside class="ai-banner" aria-labelledby="aiTitle"><div class="ai-copy"><img src="robot_ipa.png" alt="" loading="lazy"><div><h3 id="aiTitle">La información que necesitas, más cerca</h3><p>Accede al Centro de Conocimiento Institucional y encuentra apoyo para tus consultas de trabajo.</p></div></div><a class="button button-primary" href="https://centro-respuestas-ipa.procesos722548.chatgpt.site/" target="_blank" rel="noopener noreferrer">Consultar el centro <svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></a></aside>
+</section>
+<section class="section experiences" id="comunidad" aria-labelledby="communityTitle"><div class="container"><div class="section-heading"><div><div class="eyebrow">Comunidad Amautina</div><h2 id="communityTitle">Tu compromiso hace la diferencia</h2><p class="section-description">Reconocemos el esfuerzo y fortalecemos los lazos de nuestro equipo administrativo.</p></div></div><div class="experience-grid">
+<article class="experience"><div class="experience-media"><img src="premiacionadministrativa.jpeg" alt="Reconocimiento al equipo administrativo de Amauta" loading="lazy"></div><div class="experience-content"><small>Compromiso que se reconoce</small><h3>Reconocimiento a nuestros administrativos</h3><p>Valoramos la responsabilidad, dedicación y profesionalismo de quienes contribuyen cada día al funcionamiento y desarrollo de nuestra institución.</p><p>Este reconocimiento expresa nuestro agradecimiento a un equipo que trabaja con eficiencia, vocación de servicio y compromiso con la mejora continua.</p></div></article>
+<article class="experience"><div class="experience-media"><img src="compartiradministrativo.jpeg" alt="Encuentro del equipo administrativo de Amauta" loading="lazy"></div><div class="experience-content"><small>Juntos somos comunidad</small><h3>Compartir con el equipo administrativo</h3><p>Promovemos espacios de encuentro para estrechar lazos, fortalecer el compañerismo y construir relaciones basadas en el respeto, la confianza y la comunicación.</p><p>La colaboración y el sentido de pertenencia fortalecen nuestro clima institucional y nos ayudan a alcanzar objetivos compartidos.</p></div></article>
+</div></div></section>
+<section class="section container" id="plataformas" aria-labelledby="platformsTitle"><div class="section-heading"><div><div class="eyebrow">Ecosistema digital</div><h2 id="platformsTitle">Tus plataformas, más cerca</h2><p class="section-description">Accede directamente a los servicios institucionales.</p></div><div class="carousel-actions"><button class="icon-button" id="platformPrev" aria-label="Ver plataformas anteriores" aria-controls="platformTrack"><svg class="icon" aria-hidden="true"><use href="#i-left"/></svg></button><button class="icon-button" id="platformNext" aria-label="Ver plataformas siguientes" aria-controls="platformTrack"><svg class="icon" aria-hidden="true"><use href="#i-right"/></svg></button></div></div><div class="platform-track" id="platformTrack" role="region" aria-label="Plataformas institucionales; utiliza las flechas para desplazarte" tabindex="0"><a class="platform" href="https://www.youtube.com/shorts/Ktn_FEPxYdk" target="_blank" rel="noopener noreferrer"><span class="platform-media"><img src="AplicativoMovil_Amauta+.jpg" alt="" loading="lazy" decoding="async"></span><strong>Aplicativo Móvil Amauta+<svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></strong></a>
+<a class="platform" href="https://amauta.q10.com/SolicitudesInstitucionales/NuevaSolicitudEstudiante" target="_blank" rel="noopener noreferrer"><span class="platform-media"><img src="sistema_tramites_q10.jpg" alt="" loading="lazy" decoding="async"></span><strong>Solicitudes Q10<svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></strong></a>
+<a class="platform" href="https://iespamauta.novosofterp.pro/ecommerce" target="_blank" rel="noopener noreferrer"><span class="platform-media"><img src="tienda_virtual.jpg" alt="" loading="lazy" decoding="async"></span><strong>Tienda Virtual<svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></strong></a>
+<a class="platform" href="https://www.digitaliapublishing.com/" target="_blank" rel="noopener noreferrer"><span class="platform-media"><img src="digitaliaBibloteca.jpg" alt="" loading="lazy" decoding="async"></span><strong>Biblioteca Digitalia<svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></strong></a>
+<a class="platform" href="https://www.youtube.com/@ipaAmauta" target="_blank" rel="noopener noreferrer"><span class="platform-media"><img src="canalYoutube.jpg" alt="" loading="lazy" decoding="async"></span><strong>Canal de YouTube<svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></strong></a>
+<a class="platform" href="https://amauta-ipa.github.io/RespositorioAmauta/ini.html" target="_blank" rel="noopener noreferrer"><span class="platform-media"><img src="repositorioInstitucional.jpg" alt="" loading="lazy" decoding="async"></span><strong>Repositorio Institucional<svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></strong></a>
+<a class="platform" href="https://amauta.q10.com/OfertasLaborales" target="_blank" rel="noopener noreferrer"><span class="platform-media"><img src="BolsaLaboral.jpg" alt="" loading="lazy" decoding="async"></span><strong>Bolsa Laboral<svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></strong></a>
+<a class="platform" href="https://amauta.q10.com" target="_blank" rel="noopener noreferrer"><span class="platform-media"><img src="PlataformaQ10.jpg" alt="" loading="lazy" decoding="async"></span><strong>Plataforma Q10<svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></strong></a>
+<a class="platform" href="https://amauta-ipa.github.io/Amauta-Info/amauta+info.html" target="_blank" rel="noopener noreferrer"><span class="platform-media"><img src="Amauta+Info.jpg" alt="" loading="lazy" decoding="async"></span><strong>Portal Amauta+Info<svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></strong></a></div></section>
+</main>
+<footer class="footer"><div class="container"><div class="footer-grid"><div class="footer-brand"><a class="brand" href="#inicio"><span class="brand-mark"><img src="logo_blanco_sin_ipa.png" alt=""></span><span><span class="brand-name">Amauta <b>+</b> Info</span><span class="brand-caption">Instituto Pedagógico Amauta</span></span></a><p>Información y herramientas para acompañar tu trabajo y fortalecer la gestión institucional.</p><button class="button button-ghost" id="showWelcome">Ver bienvenida</button></div><div><h3>Servicios institucionales</h3><ul><li>Biblioteca institucional</li><li>Atención y seguimiento al alumno</li><li>Plataformas institucionales</li><li>Aplicativo móvil</li><li>Bolsa laboral</li><li>Portal informativo</li><li>Créditos y cobranza</li></ul></div><div><h3>Nuestros programas</h3><ul><li>Educación Inicial</li><li>Educación Primaria</li><li>Educación Secundaria<br>Especialidad de Ciencias Sociales</li></ul></div><div><h3>Estamos para ayudarte</h3><ul><li>Av. 9 de diciembre 321</li><li>Cercado de Lima</li></ul><a class="footer-contact" href="tel:+51974329311"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg>974 329 311</a><p><a href="https://amauta.q10.com/SolicitudesInstitucionales/NuevaSolicitud" target="_blank" rel="noopener noreferrer">Libro de Reclamaciones ↗</a></p></div></div><div class="footer-bottom"><span>© <span id="year">2026</span> Instituto Pedagógico Amauta. Todos los derechos reservados.</span><span>Portal informativo administrativo</span></div></div></footer>
+<dialog class="document-dialog" id="documentDialog" aria-labelledby="documentTitle"><div class="dialog-header"><div class="dialog-heading"><small>Centro de documentos</small><h2 id="documentTitle">Documento institucional</h2></div><div class="dialog-tools"><a class="button button-outline" id="documentExternal" target="_blank" rel="noopener noreferrer">Abrir en Drive <svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></a><a class="button button-primary" id="documentDownload" target="_blank" rel="noopener noreferrer">Descargar</a><button class="icon-button" id="closeDocument" aria-label="Cerrar documento" autofocus><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div></div><iframe class="document-viewer" id="documentViewer" title="Vista previa del documento institucional" allowfullscreen></iframe><p class="dialog-note">Si el documento no se muestra, utiliza <a id="documentFallback" target="_blank" rel="noopener noreferrer">Abrir en Drive</a>. El acceso depende de los permisos del archivo.</p></dialog>
+<dialog class="welcome-dialog" id="welcomeDialog" aria-labelledby="welcomeTitle" aria-describedby="welcomeText"><div class="welcome-media"><img id="welcomeImage" src="bienvenidoadministrativo3.jpeg" alt="Bienvenida al portal administrativo Amauta"><button class="icon-button welcome-close" id="closeWelcome" aria-label="Cerrar bienvenida"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div><div class="welcome-content"><div class="welcome-meta"><div class="eyebrow">Comunidad Amautina</div><span class="welcome-count" id="welcomeCount" aria-live="polite">1 de 2</span></div><h2 id="welcomeTitle">Un espacio creado para ti</h2><p id="welcomeText">Te acompañamos en tu labor administrativa con documentos, herramientas y sistemas en un solo lugar.</p><div class="welcome-actions"><button class="button button-outline" id="welcomePrev" disabled>Anterior</button><button class="welcome-skip" id="welcomeSkip">Omitir</button><button class="button button-primary" id="welcomeNext" autofocus>Siguiente <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button></div></div></dialog>
 <script>
-  const tourSteps = [
-    {
-      image: 'bienvenidoadministrativo3.jpeg',
-      title: 'Un espacio creado para tí',
-      text: 'Líderes en Innovación Educativa.'
-    },
-    {
-      image: 'fraseadministrativa.jpeg',
-      title: 'El IESPP AMAUTA valora tu esfuerzo',
-      text: 'Te acompañamos en tu labor administrativa.'
-     }
-  ];
-
-  let currentStep = 0;
-
-  const overlay = document.getElementById('tourOverlay');
-  const image = document.getElementById('tourImage');
-  const title = document.getElementById('tourTitle');
-  const text = document.getElementById('tourText');
-  const nextBtn = document.getElementById('tourNextBtn');
-  const prevBtn = document.getElementById('tourPrevBtn');
-  const skipBtn = document.getElementById('tourSkipBtn');
-  const closeBtn = document.getElementById('tourCloseBtn');
-
-  function renderStep() {
-    const step = tourSteps[currentStep];
-    image.src = step.image;
-    title.textContent = step.title;
-    text.textContent = step.text;
-
-    prevBtn.disabled = currentStep === 0;
-    nextBtn.textContent =
-      currentStep === tourSteps.length - 1 ? 'Finalizar' : 'Siguiente';
+(() => {
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const normalize = value => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const cards = [...document.querySelectorAll(".resource-card")];
+  const filters = [...document.querySelectorAll("[data-filter]")];
+  const search = $("resourceSearch");
+  let category = "Todos";
+  function renderResources() {
+    const query = normalize(search.value.trim());
+    let count = 0;
+    cards.forEach(card => {
+      const visible = (category === "Todos" || card.dataset.category === category) && normalize(card.textContent).includes(query);
+      card.hidden = !visible;
+      if (visible) count++;
+    });
+    $("resourceCount").textContent = `${count} de ${cards.length} recursos`;
+    $("emptyState").hidden = count > 0;
+    $("clearSearch").hidden = search.value.length === 0;
   }
+  function resetResources() {
+    category = "Todos";
+    search.value = "";
+    filters.forEach(button => button.setAttribute("aria-pressed", String(button.dataset.filter === category)));
+    renderResources();
+  }
+  filters.forEach(button => button.addEventListener("click", () => {
+    category = button.dataset.filter;
+    filters.forEach(item => item.setAttribute("aria-pressed", String(item === button)));
+    renderResources();
+  }));
+  search.addEventListener("input", renderResources);
+  $("clearSearch").addEventListener("click", () => { search.value = ""; renderResources(); search.focus(); });
+  $("resetFilters").addEventListener("click", () => { resetResources(); search.focus(); });
 
-  nextBtn.addEventListener('click', () => {
-    if (currentStep < tourSteps.length - 1) {
-      currentStep++;
-      renderStep();
-    } else {
-      overlay.style.display = 'none';
-    }
+  const documentDialog = $("documentDialog");
+  const welcomeDialog = $("welcomeDialog");
+  let documentTrigger = null;
+  document.querySelectorAll(".resource-card[data-file]").forEach(card => card.addEventListener("click", event => {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0 || typeof documentDialog.showModal !== "function") return;
+    event.preventDefault();
+    if (welcomeDialog.open) welcomeDialog.close();
+    documentTrigger = card;
+    const file = card.dataset.file;
+    const title = card.querySelector("h3").textContent;
+    $("documentTitle").textContent = title;
+    $("documentExternal").href = card.href;
+    $("documentFallback").href = card.href;
+    $("documentDownload").href = `https://drive.google.com/uc?export=download&id=${file}`;
+    $("documentViewer").title = `Vista previa: ${title}`;
+    documentDialog.showModal();
+    $("documentViewer").src = `https://drive.google.com/file/d/${file}/preview`;
+  }));
+  $("closeDocument").addEventListener("click", () => documentDialog.close());
+  documentDialog.addEventListener("close", () => {
+    $("documentViewer").removeAttribute("src");
+    if (documentTrigger?.isConnected) documentTrigger.focus();
+  });
+  [documentDialog, welcomeDialog].forEach(modal => {
+    let backdropStart = false;
+    const outside = event => {
+      const b = modal.getBoundingClientRect();
+      return event.clientX < b.left || event.clientX > b.right || event.clientY < b.top || event.clientY > b.bottom;
+    };
+    modal.addEventListener("pointerdown", event => { backdropStart = event.target === modal && outside(event); });
+    modal.addEventListener("click", event => {
+      if (backdropStart && event.target === modal && outside(event)) modal.close();
+      backdropStart = false;
+    });
   });
 
-  prevBtn.addEventListener('click', () => {
-    if (currentStep > 0) {
-      currentStep--;
-      renderStep();
-    }
+  const track = $("platformTrack");
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  function updateCarousel() {
+    const maximum = Math.max(0, track.scrollWidth - track.clientWidth);
+    $("platformPrev").disabled = track.scrollLeft <= 2;
+    $("platformNext").disabled = track.scrollLeft >= maximum - 2;
+  }
+  function scrollPlatforms(direction) {
+    const first = track.querySelector(".platform");
+    const gap = parseFloat(getComputedStyle(track).columnGap) || 16;
+    track.scrollBy({ left: direction * (first.getBoundingClientRect().width + gap), behavior: reducedMotion.matches ? "auto" : "smooth" });
+  }
+  $("platformPrev").addEventListener("click", () => scrollPlatforms(-1));
+  $("platformNext").addEventListener("click", () => scrollPlatforms(1));
+  track.addEventListener("scroll", updateCarousel, {passive:true});
+  track.addEventListener("keydown", event => {
+    if (event.target !== track) return;
+    if (event.key === "ArrowRight" || event.key === "ArrowLeft") { event.preventDefault(); scrollPlatforms(event.key === "ArrowRight" ? 1 : -1); }
   });
+  if (typeof ResizeObserver === "function") new ResizeObserver(updateCarousel).observe(track);
+  else window.addEventListener("resize", updateCarousel);
 
-  skipBtn.addEventListener('click', () => {
-    overlay.style.display = 'none';
+  const steps = [
+    { image:"bienvenidoadministrativo3.jpeg", title:"Un espacio creado para ti", text:"Te acompañamos en tu labor administrativa con documentos, herramientas y sistemas en un solo lugar." },
+    { image:"fraseadministrativa.jpeg", title:"Amauta valora tu esfuerzo", text:"Tu compromiso, responsabilidad y vocación de servicio contribuyen al crecimiento de nuestra comunidad educativa." }
+  ];
+  let step = 0;
+  const welcomeKey = "amauta-administrativo-welcome-v4";
+  function renderWelcome() {
+    $("welcomeImage").src = steps[step].image;
+    $("welcomeImage").alt = steps[step].title;
+    $("welcomeImage").hidden = false;
+    $("welcomeTitle").textContent = steps[step].title;
+    $("welcomeText").textContent = steps[step].text;
+    $("welcomeCount").textContent = `${step + 1} de ${steps.length}`;
+    $("welcomePrev").disabled = step === 0;
+    $("welcomeNext").textContent = step === steps.length - 1 ? "Comenzar" : "Siguiente";
+  }
+  function showWelcome() {
+    if (!documentDialog.open && !welcomeDialog.open && typeof welcomeDialog.showModal === "function") { step = 0; renderWelcome(); welcomeDialog.showModal(); }
+  }
+  $("welcomeNext").addEventListener("click", () => {
+    if (step < steps.length - 1) { step++; renderWelcome(); }
+    else welcomeDialog.close();
   });
+  $("welcomePrev").addEventListener("click", () => { if (step > 0) { step--; renderWelcome(); $("welcomeNext").focus(); } });
+  $("welcomeSkip").addEventListener("click", () => welcomeDialog.close());
+  $("closeWelcome").addEventListener("click", () => welcomeDialog.close());
+  $("showWelcome").addEventListener("click", showWelcome);
+  welcomeDialog.addEventListener("close", () => { try { sessionStorage.setItem(welcomeKey, "seen"); } catch {} });
 
-  closeBtn.addEventListener('click', () => {
-    overlay.style.display = 'none';
+  // Si falta una imagen, conserva una alternativa visual sin romper la tarjeta.
+  document.querySelectorAll("img").forEach(img => {
+    const fallback = () => {
+      if (img.closest(".brand-mark")) img.parentElement.textContent = "IPA";
+      else if (img.closest(".resource-image, .platform-media")) {
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.classList.add("icon"); svg.setAttribute("aria-hidden", "true");
+        const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+        use.setAttribute("href", "#i-document"); svg.append(use); img.replaceWith(svg);
+      } else img.hidden = true;
+    };
+    img.addEventListener("error", fallback);
+    if (img.complete && img.naturalWidth === 0) fallback();
   });
-
-  window.addEventListener('load', () => {
-    overlay.style.display = 'flex';
-    renderStep();
-  });
+  $("year").textContent = new Date().getFullYear();
+  renderResources();
+  requestAnimationFrame(updateCarousel);
+  let welcomeSeen = false;
+  try { welcomeSeen = sessionStorage.getItem(welcomeKey) === "seen"; } catch {}
+  if (!welcomeSeen) showWelcome();
+})();
 </script>
-<!-- CERRAR LA INFORMACIÓN DE POP UP SCRIPT -->
-
-
-
-
-  
-<section class="relative w-full">
-
-  <img src="portalAdmin.jpg"
-       alt="Portal docente Amauta"
-       class="w-full h-[240px] sm:h-[330px] lg:h-[457px] object-top shadow-lg"/>
-
-  <!-- Capa que OSCURECE la imagen -->
-  <div class="absolute inset-0 bg-black/40"></div>
-
-  <!-- Overlay con texto -->
-  <div class="absolute inset-0 flex items-center justify-center">
-    <h2 class="text-white text-2xl sm:text-4xl font-bold drop-shadow-lg">
-      Portal del administrativo Amauta
-    </h2>
-  </div>
-
-</section>
-
-
-
-
-
-  <!-- Contenido -->
-  <main class="w-full">
-    <section class="max-w-7xl mx-auto px-3 sm:px-4 py-6">
-      <!-- Grid cards - márgenes laterales compactos -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-
-    
- <!-- Manual de Uso de Q10 inscripciones de admisión marzo y agosto -->
-        <a class="card"
-           href="https://drive.google.com/file/d/1Pzna5GG6tCkXDkpKUCfJyIjfEpee1nPQ/view?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Manual de Uso Q10">
-          <img src="Manual_Uso_Q10.png" alt="Manual de Uso Q10"/>
-          <h3 class="text-center mt-2 font-medium">Manual de Inscripciones Admisión</h3>
-        </a>
-
-        <!-- Canal de Youtube (enlace externo) -->
-        <a class="card"
-           href="https://www.youtube.com/@ipaAmauta"
-           target="_blank" rel="noopener noreferrer"
-           title="Abrir tutoriales">
-          <img src="Youtube.png" alt="Amauta IA"/>
-          <h3 class="text-center mt-2 font-medium">Canal de Youtube</h3>
-        </a>
-
-         <!-- REPOSITORIO (enlace externo) -->
-        <a class="card"
-           href="https://amauta-ipa.github.io/RespositorioAmauta/ini.html"
-           target="_blank" rel="noopener noreferrer"
-           title="Repositorio Institucional">
-          <img src="Repositorio Institucional.png" alt="Repositorio Institucional"/>
-          <h3 class="text-center mt-2 font-medium">Repositorio Institucional</h3>
-        </a>
-
-  <!-- REPOSITORIO (enlace externo) -->
-        <a class="card"
-           href="https://amauta-ipa.github.io/Amauta-Info/amauta+info.html"
-           target="_blank" rel="noopener noreferrer"
-           title="Repositorio Institucional">
-          <img src="Portal del Docente.png" alt="Repositorio Institucional"/>
-          <h3 class="text-center mt-2 font-medium">Portal del Estudiante</h3>
-        </a>
-
- <!-- Desarrollo Docente -->
-        <a class="card"
-           href="https://amauta-ipa.github.io/Amauta-Info---Docentes/amauta+info.html"
-           target="_blank" rel="noopener noreferrer"
-           title="Portal del Docente IPA">
-          <img src="desarrolloProfesor.png" alt="Portal del Docente IPA"/>
-          <h3 class="text-center mt-2 font-medium">Portal del Docente IPA</h3>
-        </a>       
-
-<!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://amauta-ipa.github.io/Amauta-Info---Admision/amauta+info.html"
-           target="_blank" rel="noopener noreferrer"
-           title="Portal de Admisión">
-          <img src="BackUp Aulas virtuales.png" alt="Portal de Admisión"/>
-          <h3 class="text-center mt-2 font-medium">Portal de Admisión</h3>
-        </a>
-        
-        <!-- biblioteca (enlace externo) -->
-        <a class="card"
-           href="https://www.digitaliapublishing.com/"
-           target="_blank" rel="noopener noreferrer"
-           title="Abrir tutoriales">
-          <img src="Biblioteca.png" alt="Amauta IA"/>
-          <h3 class="text-center mt-2 font-medium">Biblioteca </h3>
-        </a>
-
-           <!-- REPOSITORIO (enlace externo) -->
-        <a class="card"
-           href="https://amauta.q10.com"
-           target="_blank" rel="noopener noreferrer"
-           title="Plataforma Q10">
-          <img src="PPTSustentacionTesis.png" alt="Plataforma Q10"/>
-          <h3 class="text-center mt-2 font-medium">Plataforma Q10</h3>
-        </a>
-
-        <!-- Amauta IA (enlace externo) -->
-        <a class="card"
-           href="https://monica.im/share/bot?botId=qcAnZLpM"
-           target="_blank" rel="noopener noreferrer"
-           title="Abrir Amauta IA">
-          <img src="robot_ipa.png" alt="Amauta IA"/>
-          <h3 class="text-center mt-2 font-medium">Amauta IA</h3>
-        </a>
-
-        <!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://trello.com/b/2L4kYBtq/trello-2025"
-           target="_blank" rel="noopener noreferrer"
-           title="Sistema de Evaluación Docente">
-          <img src="Trello (1).png" alt="Sistema de Evaluación Docente"/>
-          <h3 class="text-center mt-2 font-medium">Gestión del Trabajo - trello</h3>
-        </a>
-
- <!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1yYWtjgFFsQkvwXCIxc4pzJO1trgNmfy1?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Sistema de Evaluación Docente">
-          <img src="Personal - Vacaciones - Permisos.png" alt="Sistema de Evaluación Docente"/>
-          <h3 class="text-center mt-2 font-medium">Gestión de Personas Vacaciones, Permisos y Tardanzas</h3>
-        </a>
-
- <!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/100EWUMch_zkkNVrXvMJcxKNfYNHsOSMb?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Sistema de Evaluación Docente">
-          <img src="Taller de fortalecimiento.png" alt="Sistema de Evaluación Docente"/>
-          <h3 class="text-center mt-2 font-medium">Taller de Fortalecimiento</h3>
-        </a>
-
-<!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1Hynnp7B7t7pX2yzgHORlG4SSCA5WdjVC?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Sistema de Evaluación Docente">
-          <img src="Evento de graduación.png" alt="Sistema de Evaluación Docente"/>
-          <h3 class="text-center mt-2 font-medium">Evento de Graduación</h3>
-        </a>
-
-<!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1EgNoe7fQOr9rxLmr-0n2JyMfKNk5l1rp?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Sistema de Evaluación Docente">
-          <img src="Aniversario.png" alt="Sistema de Evaluación Docente"/>
-          <h3 class="text-center mt-2 font-medium">Aniversario</h3>
-        </a>
-
-<!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1xePpaZjfZEb6P97kd4SR5vcbpqfFkgPC?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Sistema de Evaluación Docente">
-          <img src="Taller de tesis.png" alt="Sistema de Evaluación Docente"/>
-          <h3 class="text-center mt-2 font-medium">Taller de Tesis</h3>
-        </a>
-
-<!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/19641eHkvNKmHyCRM1PobX5PfJnsmwsAY?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Back-Up Aulas Virtuales">
-          <img src="BackUp Aulas virtuales.png" alt="Back-Up Aulas Virtuales"/>
-          <h3 class="text-center mt-2 font-medium">Back-Up Aulas Virtuales</h3>
-        </a>
-
-<!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1C-DPW1Oyw_hFOXfInOPGia6hhrEocFe-?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Back-Up Aulas Virtuales">
-          <img src="Carpeta pedagógica docente (CV, subsanación).png" alt="Back-Up Aulas Virtuales"/>
-          <h3 class="text-center mt-2 font-medium">Carpeta Pedagogica Docente (cv,subsanación)</h3>
-        </a>
-
-         <!-- Reglamento para el Docente -->
-        <a class="card"
-           href="https://gptzero.me/es"
-           target="_blank" rel="noopener noreferrer"
-           title="Detectar Plagio con IA">
-          <img src="ReglamentoDocente.png" alt="Reglamento para el Docente"/>
-          <h3 class="text-center mt-2 font-medium">Reglamento Interno de Trabajo</h3>
-        </a> 
-
- <!-- Herramientas digitales para el docente(enlace externo) -->
-        <a class="card"
-           href="https://github.com/Amauta-IPA?tab=repositories"
-           target="_blank" rel="noopener noreferrer"
-           title="Detectar Plagio con IA">
-          <img src="GITHUB (2).png" alt="Detectar Plagio con IA"/>
-          <h3 class="text-center mt-2 font-medium">Github Repository</h3>
-        </a>
-
-<!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1UD7bsqOJqLj_oU6NFw4RNTp1tQ7vvkqb?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Área de Ventas">
-          <img src="Reglamento_Institucional.png" alt="Área de Ventas"/>
-          <h3 class="text-center mt-2 font-medium">Área de Ventas</h3>
-        </a>
-
-<!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1zLELlzVMxI93n7geWlkSNAugXXv8_Jnr?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Área de Ventas">
-          <img src="FichaPractica_I - VI.png" alt="Área de Ventas"/>
-          <h3 class="text-center mt-2 font-medium">Horas de Docentes</h3>
-        </a>
-
-<!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1lFJsYO9z2wLcYCMbQGBiMGCTAOToERZO?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Área de Ventas">
-          <img src="Manual_Pagos.png" alt="Área de Ventas"/>
-          <h3 class="text-center mt-2 font-medium">Pagos - Boletas de Sociales</h3>
-        </a>
-
-
-<!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/19SNS1sNX3ip5CdOO8afY1SZ3tKX3rhoq?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Área de Ventas">
-          <img src="Tarifario.png" alt="Área de Ventas"/>
-          <h3 class="text-center mt-2 font-medium">Boletas Mandiles, Polos</h3>
-        </a>
-
-        <!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://amauta-ipa.github.io/Sistema_Got_Eyes/index.html"
-           target="_blank" rel="noopener noreferrer"
-           title="Área de Ventas">
-          <img src="Taller de fortalecimiento.png" alt="Área de Ventas"/>
-          <h3 class="text-center mt-2 font-medium">Sistema Integrado de Gestión y Monitoreo Institucional - IPA (SGM) </h3>
-        </a>
-
-        <!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://amauta-srg.vercel.app/"
-           target="_blank" rel="noopener noreferrer"
-           title="Área de Ventas">
-          <img src="PPTSustentacionTesis.png" alt="Área de Ventas"/>
-          <h3 class="text-center mt-2 font-medium">Sistema de Gestión y seguimiento - SIGESE</h3>
-        </a>
-
-        <!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1Cuhglc5wiXwdBysccrAVZIDlG9cQ2Cuq?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Área de Ventas">
-          <img src="lineamientosTesisPresentacion.png" alt="Área de Ventas"/>
-          <h3 class="text-center mt-2 font-medium">Seguimiento de Egresados</h3>
-        </a>
-
-        <!-- Herramientas digitales para el docente(enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1Sc7nZLvro2Eikg8jGY3Q_daXPGmH0izc?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Herramientas Digitales para el aula">
-          <img src="OrientacionSustentacionTesis.png" alt="Herramientas Digitales para el aula"/>
-          <h3 class="text-center mt-2 font-medium">Seguimiento de Docentes</h3>
-        </a> 
-
-        <!-- Carpeta Pedagogica (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1tQoPJz0aLI7J3bQ8OhLTaf-TH_eC53_8?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Carpeta Pedagogica">
-          <img src="Reglamento_Institucional.png" alt="Carpeta Pedagogica"/>
-          <h3 class="text-center mt-2 font-medium">Seguimiento de Estudiantes</h3>
-        </a>
-
- <!-- Drive de Registros de Calificaciones Q10 (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1zq0k-Isk0EDSqnUK5q1vVIMf1WI9RY0i?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Drive de Registros de Calificaciones Q10">
-          <img src="Canales_Atencion.png" alt="Drive de Registros de Calificaciones Q10"/>
-          <h3 class="text-center mt-2 font-medium">Data Actual Estudiantes</h3>
-        </a>
-
- <!-- Drive de Registros de egresados -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/12c4I44a9vQiWeJMtAs_xJmubRNjy05Cv?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Drive de Registros de Calificaciones Q10">
-          <img src="Canales_Atencion.png" alt="Drive de Registros de Calificaciones Q10"/>
-          <h3 class="text-center mt-2 font-medium">Data Actual Egresados</h3>
-        </a>
-
-
-        
- <!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1DX--D6FsbHH8Yv6TSLqyikTn5bNfCvev?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Área de Ventas">
-          <img src="Manual_Uso_Q10.png" alt="Área de Ventas"/>
-          <h3 class="text-center mt-2 font-medium">Drive de Procesos</h3>
-        </a>
-
- <!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1OaUHLUNJBvyLte4e4Cg7Qf7oKxBymM7D?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Área de Ventas">
-          <img src="Repositorio Institucional.png" alt="Área de Ventas"/>
-          <h3 class="text-center mt-2 font-medium">Gestión Institucional - Supervisiones DRELM / DIFOID</h3>
-        </a>
-
-
-         <!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1lisYE3oZOV9_gxjGZOqgsDra7uhm8eQG?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Área de Ventas">
-          <img src="Reglamento_Prac_Invest.png" alt="Área de Ventas"/>
-          <h3 class="text-center mt-2 font-medium">Documentos para el Admisión</h3>
-        </a>
-
-  <!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://iespamauta.pseperu.com/ecommerce"
-           target="_blank" rel="noopener noreferrer"
-           title="Área de Ventas">
-          <img src="Portal del Docente.png" alt="Área de Ventas"/>
-          <h3 class="text-center mt-2 font-medium">Tienda Virtual</h3>
-        </a>
-
-
-          <!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://iespamauta.pseperu.com/login"
-           target="_blank" rel="noopener noreferrer"
-           title="Área de Ventas">
-          <img src="Taller de fortalecimiento.png" alt="Área de Ventas"/>
-          <h3 class="text-center mt-2 font-medium">Tecnovo</h3>
-        </a>
-
-   <!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1M7FYlgIqVjd_MpQAE1TD2VwjVpCZ8KBJ"
-           target="_blank" rel="noopener noreferrer"
-           title="Expedientes IPA">
-          <img src="OrientacionSustentacionTesis.png" alt="Expedientes IPA"/>
-          <h3 class="text-center mt-2 font-medium">Expedientes IPA</h3>
-        </a>
-
- <!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1nSxjETKOV0W2pezNaiGx-Tac6NyzWcdT?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Área de Ventas">
-          <img src="Manual_Uso_Q10.png" alt="Área de Ventas"/>
-          <h3 class="text-center mt-2 font-medium">Actas y Nominas de Matricula IPA</h3>
-        </a>
-
-
- <!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1ifgH6IVLLmoOa44Bbh59NQ-vF65lBCtT?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Sistema de Evaluación Docente">
-          <img src="Personal - Vacaciones - Permisos.png" alt="Sistema de Evaluación Docente"/>
-          <h3 class="text-center mt-2 font-medium">Data de Examen de Subsanación</h3>
-        </a>
-        
-         <!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1MAyt5EnHon_iKiWtfkckxcp-I7SHAQq5?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Área de Ventas">
-          <img src="lineamientosTesisPresentacion.png" alt="Área de Ventas"/>
-          <h3 class="text-center mt-2 font-medium">Semana Cero IPA</h3>
-        </a>
-
-         <!-- biblioteca (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1EXtWWykxDY_VaXAiqXG5tPeAW-YQgow8?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Abrir tutoriales">
-          <img src="Biblioteca.png" alt="Amauta IA"/>
-          <h3 class="text-center mt-2 font-medium">Convocatoria de Docentes </h3>
-        </a>
-
-        
-        
-  <!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1Tw3pRFWgSdYcSKPqHnHF6_wSsGI34iBq?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Área de Ventas">
-          <img src="Carpeta pedagógica docente (CV, subsanación).png" alt="Área de Ventas"/>
-          <h3 class="text-center mt-2 font-medium">Inducción para el Examen de Admisión</h3>
-        </a>
-  <!-- Carpeta Pedagogica (enlace externo) -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1tcI0szAtjezda6c002T6_oqINJKj5E2C?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Convocatoria de Administrativo">
-          <img src="Reglamento_Institucional.png" alt="Convocatoria de Administrativo"/>
-          <h3 class="text-center mt-2 font-medium">Convocatoria de Administrativos</h3>
-        </a>
-
-         <!-- Área academica -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1ZlzDKxaOhDjGOXZjK3Ui2Q8BSRvP6GHf?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Área Académica">
-          <img src="Repositorio Institucional.png" alt="Área Académica"/>
-          <h3 class="text-center mt-2 font-medium">ÁREA ACADÉMICA</h3>
-        </a>
-
-          <!-- Área academica -->
-        <a class="card"
-           href="https://amauta-ipa.github.io/Diploma_Egresados_IPA/validacionQR.html"
-           target="_blank" rel="noopener noreferrer"
-           title="Área Académica">
-          <img src="DIPLOMA DE EGRESADO.jpeg" alt="Área Académica"/>
-          <h3 class="text-center mt-2 font-medium">VALIDAR DIPLOMA DE EGRESADO</h3>
-        </a>
-
-           <!-- Área academica -->
-        <a class="card"
-           href="https://amauta-ipa.github.io/Constancia_Egresado/validacionQR.html"
-           target="_blank" rel="noopener noreferrer"
-           title="Área Académica">
-          <img src="CONSTANCIA DE EGRESADO.jpeg" alt="Área Académica"/>
-          <h3 class="text-center mt-2 font-medium">VALIDAR CONSTANCIA DE EGRESADO</h3>
-        </a>
-
-          <!-- Área academica -->
-        <a class="card"
-           href="https://amauta-ipa.github.io/Constancia_Estudios_EnCurso/validacionQR.html"
-           target="_blank" rel="noopener noreferrer"
-           title="Área Académica">
-          <img src="CONSTANCIA DE ESTUDIOS EN CURSO.jpeg" alt="Área Académica"/>
-          <h3 class="text-center mt-2 font-medium">VALIDAR CONSTANCIA DE ESTUDIOS EN CURSO</h3>
-        </a>
-
-         <!-- Área academica -->
-        <a class="card"
-           href="https://amauta-ipa.github.io/Constancia_Estudios_Culminado/validacionQR.html"
-           target="_blank" rel="noopener noreferrer"
-           title="Área Académica">
-          <img src="CONSTANCIA DE ESTUDIOS CULMINADO.jpeg" alt="Área Académica"/>
-          <h3 class="text-center mt-2 font-medium">VALIDAR CONSTANCIA DE ESTUDIOS CULMINADOS</h3>
-        </a>
-
-        <!-- Área academica -->
-        <a class="card"
-           href="https://amauta-ipa.github.io/Certi_Cenfocap/validacionQR.html"
-           target="_blank" rel="noopener noreferrer"
-           title="Área Académica">
-          <img src="CERTIFICADO CENFOCAP O AUXILIAR.jpeg" alt="Área Académica"/>
-          <h3 class="text-center mt-2 font-medium">VALIDAR CERTIFICADO DE CENFOCAP</h3>
-        </a>
-
-<!-- Cumpleaños -->
-        <a class="card"
-           href="https://drive.google.com/drive/folders/1auJRFAcdxweo6B2pkm-G2UQuchRHpQ4Y?usp=sharing"
-           target="_blank" rel="noopener noreferrer"
-           title="Birthday">
-          <img src="Aniversario.png" alt="Cumpleaños"/>
-          <h3 class="text-center mt-2 font-medium">CUMPLEAÑOS DOCENTES Y ADMINISTRATIVOS</h3>
-        </a>
-
-        <!-- SINI ES UN SISTEMA DE INFORMACIÓN PARA LA SUPERVISIÓN -->
-        <a class="card"
-           href="https://amauta-ipa.github.io/Sistema-de-Informaci-n-Institucional-SINI-/"
-           target="_blank" rel="noopener noreferrer"
-           title="SINI">
-          <img src="PPTSustentacionTesis.png" alt="Cumpleaños"/>
-          <h3 class="text-center mt-2 font-medium">Sistema de Información Institucional - SINI</h3>
-        </a>
-
-<!-- REPOSITORIO (enlace externo) -->
-        <a class="card"
-           href="https://generador-sesiones-docentes.procesos722548.chatgpt.site/"
-           target="_blank" rel="noopener noreferrer"
-           title="Repositorio Institucional">
-          <img src="Portal del Docente.png" alt="Sesiones de Clase con IA"/>
-          <h3 class="text-center mt-2 font-medium">AMAUTA Sesion PRO con IA</h3>
-        </a>
-
- <!-- Desarrollo Docente -->
-        <a class="card"
-           href="https://centro-respuestas-ipa.procesos722548.chatgpt.site/"
-           target="_blank" rel="noopener noreferrer"
-           title="Portal del Docente IPA">
-          <img src="desarrolloProfesor.png" alt="Centro de Conocimientos Institucional"/>
-          <h3 class="text-center mt-2 font-medium">Centro de Conocimiento Institucional</h3>
-        </a>       
-
-<!-- Sistema de Evaluación Docente (enlace externo) -->
-        <a class="card"
-           href="https://amauta.edu.pe/"
-           target="_blank" rel="noopener noreferrer"
-           title="Portal de Admisión">
-          <img src="BackUp Aulas virtuales.png" alt="Web oficial"/>
-          <h3 class="text-center mt-2 font-medium">Página Web Oficial</h3>
-        </a>
-        
-        <!-- biblioteca (enlace externo) -->
-        <a class="card"
-           href="https://sistema-horarios-ipa.procesos722548.chatgpt.site/"
-           target="_blank" rel="noopener noreferrer"
-           title="Abrir tutoriales">
-          <img src="Biblioteca.png" alt="Amauta IA"/>
-          <h3 class="text-center mt-2 font-medium">Sistema Inteligente de Creación y Análisis de Horarios IPA</h3>
-        </a>
-
-        
-          <!-- Accesos rápidos bajo la card (opcional) 
-          <div class="mt-2 flex items-center justify-center gap-2">
-            <a href="https://drive.google.com/file/d/15qdNJNs7V4DnGNE8RZ0ZaWY9gfclYBnc/view?usp=sharing"
-               target="_blank" rel="noopener noreferrer"
-               class="px-3 py-1 rounded bg-secondary text-secondary-foreground text-xs sm:text-sm hover:opacity-90 transition"
-               title="Abrir en Drive">Abrir en Drive</a>
-            <a href="https://drive.google.com/uc?export=download&id=15qdNJNs7V4DnGNE8RZ0ZaWY9gfclYBnc"
-               class="px-3 py-1 rounded border text-xs sm:text-sm hover:bg-gray-100 transition"
-               title="Descargar PDF">Descargar</a>
-          </div>
-        </div>
--->
-      </div>
-    </section>
-
-
-<!-- ================== VIDEOS INFORMATIVOS ================== -->
-<section class="max-w-7xl mx-auto px-3 sm:px-4 py-10 space-y-12">
-
-  <!-- FASE 1: Texto izquierda / Video derecha -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-    
-    <!-- Texto -->
-    <div>
-      <h3 class="text-xl font-semibold text-gray-800 mb-2">
-              <b> Reconocimiento a nuestros administrativos</b>
-      </h3>
-      <p class="text-gray-600 leading-relaxed text-justify" >
-El Instituto Pedagógico Amauta reconoce y premia el compromiso, la responsabilidad y la dedicación de su equipo administrativo, cuyo trabajo constante y profesional resulta fundamental para el adecuado funcionamiento y desarrollo de la institución.
-
-Esta premiación representa una muestra de valoración y agradecimiento a quienes, desde su labor diaria, contribuyen con eficiencia, vocación de servicio y sentido institucional al logro de nuestros objetivos educativos y al fortalecimiento de una gestión basada en la calidad y la mejora continua.
-      </p>
-    </div>
-
-    <!-- IMAGENES CON URL -->
-<div class="w-full aspect-video rounded-xl overflow-hidden shadow-lg flex items-center justify-center">
-  <a
-    href=" "
-    target="_blank"
-    rel="noopener noreferrer"
-    class="flex items-center justify-center w-full h-full"
-  >
-    <img
-      src="premiacionadministrativa.jpeg"
-      alt="Detectar Plagio con IA"
-      class="w-[450px] h-[300px] object-contain"
-      loading="lazy"
-    />
-  </a>
-</div>
-
-
-<!-- IMAGENES CON URL -->
-<div class="w-full aspect-video rounded-xl overflow-hidden shadow-lg flex items-center justify-center">
-  <a
-    href=" "
-    target="_blank"
-    rel="noopener noreferrer"
-    class="flex items-center justify-center w-full h-full"
-  >
-    <img
-      src="compartiradministrativo.jpeg"
-      alt="Detectar Plagio con IA"
-      class="w-[450px] h-[300px] object-contain"
-      loading="lazy"
-    />
-  </a>
-</div>
-
-
-<!-- FASE 1: Texto izquierda / Video derecha -->
-  
-    
-  <!-- Texto -->
-    <div>
-      <h3 class="text-xl font-semibold text-gray-800 mb-2">
-              <b> Compartir con el equipo administrativo</b>
-      </h3>
-      <p class="text-gray-600 leading-relaxed text-justify" >
-El Instituto Pedagógico Amauta impulsa espacios de encuentro y convivencia con su equipo administrativo, orientados a estrechar lazos, fortalecer el compañerismo y promover relaciones basadas en el respeto, la confianza y la comunicación.
-
-Estas actividades contribuyen a consolidar un clima institucional positivo, donde el trabajo colaborativo, el sentido de pertenencia y la valoración del esfuerzo individual y colectivo se convierten en pilares fundamentales para el desarrollo humano y el logro de los objetivos institucionales.   </p>
-    </div>
-
-
-</section>
-<!-- ========================================================= -->
-
-
-
-    
-    <!-- Carrusel -->
-    <section class="carousel-container">
-      <button class="carousel-btn prev" aria-label="Anterior">&#10094;</button>
-      <div class="carousel-track-container">
-        <ul class="carousel-track">
-          <li class="carousel-item">
-            <a href="https://www.youtube.com/shorts/Ktn_FEPxYdk" target="_blank" rel="noopener noreferrer" title="Video: Aplicativo Móvil Amauta+">
-              <img src="AplicativoMovil_Amauta+.jpg" alt="Aplicativo Móvil Amauta+">
-            </a>
-          </li>
-          <li class="carousel-item">
-            <a href="https://amauta.q10.com/SolicitudesInstitucionales/NuevaSolicitudEstudiante" target="_blank" rel="noopener noreferrer" title="Solicitudes Q10">
-              <img src="sistema_tramites_q10.jpg" alt="Solicitudes Q10">
-            </a>
-          </li>
-          <li class="carousel-item">
-            <a href="https://iespamauta.novosofterp.pro/ecommerce" target="_blank" rel="noopener noreferrer" title="Tienda Virtual">
-              <img src="tienda_virtual.jpg" alt="Tienda Virtual">
-            </a>
-          </li>
-          <li class="carousel-item">
-            <a href="https://www.digitaliapublishing.com/" target="_blank" rel="noopener noreferrer" title="Biblioteca Digital CONCYTEC">
-              <img src="digitaliaBibloteca.jpg" alt="Biblioteca Digital CONCYTEC">
-            </a>
-          </li>
-          <li class="carousel-item">
-            <a href="https://www.youtube.com/@ipaAmauta" target="_blank" rel="noopener noreferrer" title="Canal de YouTube">
-              <img src="canalYoutube.jpg" alt="Canal de YouTube">
-            </a>
-          </li>
-          <li class="carousel-item">
-            <a href="https://amauta-ipa.github.io/RespositorioAmauta/ini.html" target="_blank" rel="noopener noreferrer" title="Repositorio Institucional">
-              <img src="repositorioInstitucional.jpg" alt="Repositorio Institucional">
-            </a>
-          </li>
-          <li class="carousel-item">
-            <a href="https://amauta.q10.com/OfertasLaborales" target="_blank" rel="noopener noreferrer" title="Bolsa Laboral">
-              <img src="BolsaLaboral.jpg" alt="Bolsa Laboral">
-            </a>
-          </li>
-          <li class="carousel-item">
-            <a href="https://amauta.q10.com" target="_blank" rel="noopener noreferrer" title="Plataforma Q10">
-              <img src="PlataformaQ10.jpg" alt="Plataforma Q10">
-            </a>
-          </li>
-          <li class="carousel-item">
-            <a href="https://amauta-ipa.github.io/Amauta-Info/amauta+info.html" target="_blank" rel="noopener noreferrer" title="Portal Amauta+Info">
-              <img src="Amauta+Info.jpg" alt="Portal Amauta+Info">
-            </a>
-          </li>
-        </ul>
-      </div>
-      <button class="carousel-btn next" aria-label="Siguiente">&#10095;</button>
-    </section>
-  </main>
-
-  <!-- Modal PDF -->
-  <div id="pdfModal" class="modal-root" aria-hidden="true" aria-labelledby="pdfTitle" role="dialog">
-    <div class="modal-card">
-      <button class="modal-close" id="modalCloseBtn" aria-label="Cerrar">✖</button>
-
-      <div class="modal-header">
-        <div class="modal-title" id="pdfTitle">Documento</div>
-        <div class="modal-actions">
-          <a id="openInDriveBtn" target="_blank" rel="noopener noreferrer" title="Abrir en Drive">Abrir en Drive</a>
-          <a id="downloadBtn" title="Descargar PDF">Descargar</a>
-        </div>
-      </div>
-
-      <div class="modal-body">
-        <iframe id="pdfViewer" title="Visor de documento PDF"></iframe>
-      </div>
-    </div>
-  </div>
-
-  <!-- Footer -->
-  <footer class="relative text-white bg-primary mt-8">
-    <div class="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-3 sm:px-4 py-10 max-w-7xl mx-auto">
-      <div>
-        <h4 class="font-semibold">Nosotros</h4>
-        <p class="mt-1 mb-2">Líderes en Innovación Educativa</p>
-        <a class="underline underline-offset-2" href="https://amauta.q10.com/SolicitudesInstitucionales/NuevaSolicitud" target="_blank" rel="noopener noreferrer">
-          Libro de Reclamaciones
-        </a>
-      </div>
-      <div>
-        <h4 class="font-semibold">Servicios</h4>
-        <ul class="list-disc pl-5 mt-2 space-y-1">
-          <li>Biblioteca Institucional</li>
-          <li>Atención y seguimiento al Alumno</li>
-          <li>Plataformas Institucionales</li>
-          <li>Aplicativo Móvil</li>
-          <li>Bolsa Laboral</li>
-          <li>Portal Informativo</li>
-          <li>Créditos y Cobranza</li>
-        </ul>
-      </div>
-      <div>
-        <h4 class="font-semibold">Programas</h4>
-        <ul class="list-disc pl-5 mt-2 space-y-1">
-          <li>Educación Inicial</li>
-          <li>Educación Primaria</li>
-          <li>Educación Secundaria (Ciencias Sociales)</li>
-        </ul>
-      </div>
-      <div>
-        <h4 class="font-semibold">Contacto</h4>
-        <p class="mt-2">Av. 9 de diciembre 321, Cercado de Lima</p>
-        <p class="mt-1">Celular: 974 329 311</p>
-      </div>
-    </div>
-
-    <div class="relative z-10 text-center pb-6">
-      <div class="text-sm opacity-90">© 2025 Portal Informativo Institucional IPA - AMAUTA. <span class="opacity-80">Versión 2.1.0</span></div>
-    </div>
-
-    <!-- Líneas verticales animadas -->
-    <div class="v-line" style="left:5%;"></div>
-    <div class="v-line" style="left:15%;"></div>
-    <div class="v-line" style="left:25%;"></div>
-    <div class="v-line" style="left:35%;"></div>
-    <div class="v-line" style="left:50%;"></div>
-    <div class="v-line" style="left:65%;"></div>
-    <div class="v-line" style="left:80%;"></div>
-  </footer>
-
-  <!-- Scripts -->
-  <script>
-    /* ===== Utilidades de Google Drive ===== */
-    const buildDriveViewURL = (fileId) => `https://drive.google.com/file/d/${fileId}/view?usp=sharing`;
-    const buildDriveDownloadURL = (fileId) => `https://drive.google.com/uc?export=download&id=${fileId}`;
-
-    /* ===== Modal ===== */
-    const modalRoot = document.getElementById('pdfModal');
-    const pdfViewer = document.getElementById('pdfViewer');
-    const modalTitle = document.getElementById('pdfTitle');
-    const openInDriveBtn = document.getElementById('openInDriveBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const modalCloseBtn = document.getElementById('modalCloseBtn');
-
-    const openPDFModal = ({ title, previewURL, fileId }) => {
-      modalTitle.textContent = title || 'Documento';
-      pdfViewer.src = previewURL || '';
-      if (fileId) {
-        openInDriveBtn.href = buildDriveViewURL(fileId);
-        downloadBtn.href = buildDriveDownloadURL(fileId);
-        downloadBtn.setAttribute('target','_blank');
-        downloadBtn.setAttribute('rel','noopener noreferrer');
-      } else {
-        openInDriveBtn.removeAttribute('href');
-        downloadBtn.removeAttribute('href');
-      }
-      modalRoot.classList.add('is-open');
-      modalRoot.setAttribute('aria-hidden', 'false');
-    };
-
-    const closePDFModal = () => {
-      modalRoot.classList.remove('is-open');
-      modalRoot.setAttribute('aria-hidden', 'true');
-      pdfViewer.src = '';
-    };
-
-    modalCloseBtn.addEventListener('click', closePDFModal);
-    modalRoot.addEventListener('click', (e) => { if (e.target === modalRoot) closePDFModal(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modalRoot.classList.contains('is-open')) closePDFModal(); });
-
-    // Bind a todas las cards con data-preview/fileid
-    document.querySelectorAll('.card[data-preview]').forEach(card => {
-      const title = card.getAttribute('data-title') || 'Documento';
-      const preview = card.getAttribute('data-preview') || '';
-      const fileId = card.getAttribute('data-fileid') || '';
-
-      const handler = () => openPDFModal({ title, previewURL: preview, fileId });
-      card.addEventListener('click', handler);
-      card.addEventListener('keypress', (e) => { if (e.key === 'Enter') handler(); });
-    });
-
-    /* ===== Carrusel ===== */
-    const track = document.querySelector('.carousel-track');
-    const prevBtn = document.querySelector('.carousel-btn.prev');
-    const nextBtn = document.querySelector('.carousel-btn.next');
-    const items = document.querySelectorAll('.carousel-item');
-
-    let index = 0;
-    let itemsPerView = window.innerWidth < 640 ? 2 : 4;
-    const totalItems = items.length;
-
-    const updateCarousel = () => {
-      itemsPerView = window.innerWidth < 640 ? 2 : 4;
-      const slideWidth = items[0].getBoundingClientRect().width;
-      track.style.transform = `translateX(-${index * slideWidth}px)`;
-    };
-
-    nextBtn.addEventListener('click', () => {
-      if (index < totalItems - itemsPerView) { index++; updateCarousel(); }
-    });
-
-    prevBtn.addEventListener('click', () => {
-      if (index > 0) { index--; updateCarousel(); }
-    });
-
-    window.addEventListener('resize', updateCarousel);
-  </script>
 </body>
 </html>
 
